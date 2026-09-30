@@ -1,0 +1,105 @@
+# GridMesh configuration — every tunable number lives here, not in code.
+seed: 42
+
+# ---------------------------------------------------------------- data
+data:
+  path: data/raw/wind.csv        # NSRDB-style 10-min weather + irradiance file
+  timestamp_col: auto            # "auto" = detect; or give the column name
+  assumed_year: 2019             # file has Month/Day/Hour/Minute but NO year -> assumption
+  target_col: WindSpeed_Class    # original label in the file (not used as the main target)
+  power_col: null                # set if a dataset has MEASURED generation
+  site_col: null                 # set if a dataset already has a site ID
+  task: auto
+
+# What we forecast.
+#   pv_from_irradiance : PV power MODELED from the file's real GHI + temperature (main path)
+#   column             : use an existing continuous column as-is (e.g. measured power)
+target:
+  mode: pv_from_irradiance
+  column: null
+
+# Simplified PVWatts-style model (horizontal plane, no tilt transposition).
+# Output is per-unit of installed capacity (kW per kWp), clipped at inverter limit.
+pv_model:
+  noct: 45.0                     # nominal operating cell temperature, deg C
+  ref_irradiance: 1000.0         # W/m2 at which module gives rated power
+  inverter_clip: 1.0             # p.u.
+
+split:                           # time-ordered, never random
+  # blocked_monthly : inside EVERY month -> first 70% of days train, next 15% val, last 15% test
+  #                   (all seasons, incl. monsoon, appear in every split)
+  # chronological   : one global cut (train Jan-Sep, test Nov-Dec) -> seasonal-shift stress test
+  mode: blocked_monthly
+  train: 0.70
+  val: 0.15
+  test: 0.15
+
+# ------------------------------------------------------------- features
+features:
+  lookback: 6                    # 6 x 10 min = 1 hour of history
+  horizon: 3                     # 3 x 10 min = +30 min ahead forecast
+  lagged: [pv, GHI, DNI, DHI, kt, Temperature]        # get `lookback` lags each
+  current: [Relative Humidity, Pressure, Precipitable Water, Aerosol Optical Depth, Dew Point]
+  cloud_type_values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # one-hot of Cloud Type at time t
+  # Known in advance at forecast time (astronomy / clear-sky model), taken at t+horizon:
+  future_known: [Clearsky GHI, cos_zenith, hour_sin, hour_cos, doy_sin, doy_cos]
+  daytime_zenith_max: 85.0       # metrics are reported on daytime targets only
+
+# -------------------------------------------------------- virtual sites
+# SIMULATED heterogeneity. All sites share ONE real weather record (co-located at one
+# aggregation node); differences come from PV configuration and sensor quality.
+virtual_sites:
+  capacity_mw: [5.0, 20.0]       # installed capacity range (used by the reserve node)
+  derate: [0.80, 0.90]           # system losses (inverter, wiring, soiling)
+  temp_coeff: [-0.0045, -0.0035] # 1/deg C, typical crystalline silicon
+  sensor_noise_std: [0.00, 0.05] # relative Gaussian noise on weather features
+  sensor_bias: [-0.03, 0.03]     # relative calibration bias on irradiance sensors
+  missing_rate: [0.00, 0.03]     # random feature dropouts (forward-filled)
+  target_noise_std: [0.000, 0.010]  # power-meter noise, p.u.
+  history_fraction: [0.20, 1.00] # share of training history a site has (site age)
+
+# ----------------------------------------------------------------- model
+model:
+  # residual_smart_persistence: network learns the CORRECTION to clear-sky persistence
+  #   (chosen on the validation set; beat "direct" on all 4 sites). "direct" also supported.
+  target: residual_smart_persistence
+  hidden: [64, 64]
+  lr: 0.001
+  batch_size: 256
+  epochs: 15                     # for centralized / local-only baselines
+  weight_decay: 0.0
+
+paths:
+  outputs: outputs
+
+# ------------------------------------------------------------ federated
+federated:
+  rounds: 20
+  local_epochs: 1
+  client_fraction: 1.0           # share of clients sampled per round (e.g. 0.2 for 100 clients)
+  min_clients: 2                 # a round with fewer reporting clients keeps the old model
+  dropout_rate: 0.0              # probability a selected client silently drops out
+
+# Reliability-aware aggregation (our prototype mechanism, see src/reliability/trust.py)
+reliability:
+  error_tolerance: 0.25          # error up to 25% above peer median is not penalised
+  error_sharpness: 2.0           # beta: how fast weight falls beyond the tolerance
+  trust_ema: 0.5                 # lambda: memory of previous trust
+  quarantine_below: 0.2          # trust below this -> excluded from aggregation this round
+  use_data_quality: true
+
+# Event-aware participation (communication-efficient scaling)
+event_aware:
+  drift_k: 2.0                   # drift if error > mean + k*std of recent history
+  window: 5
+  min_history: 3
+  stable_participation: 0.5      # chance a STABLE client joins a round (drifting ones always join)
+  heartbeat_bytes: 16            # tiny status message (error, quality) sent by skipping clients
+
+# Simulated faults for ONE site ("degraded data / sensor drift"; not cyber attacks)
+faults:
+  start_round: 6                 # site's data degrades from this round on
+  feature_corruption: {irradiance_scale: 0.6, noise_std: 0.25}  # dirty / misaligned pyranometer
+  target_noise: {std: 0.10}                                      # noisy power meter, p.u.
+  stale: {hold_steps: 12}                                        # SCADA values frozen in 2-h blocks
+  bias: {scale: 1.25}                                            # miscalibrated power meter
