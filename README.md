@@ -140,10 +140,10 @@ observable when the forecast is issued.
   on pooled data (RMSE ≈ 0.064 p.u.) and beat local-only training (≈ 0.067), most on the weakest
   site (worst-site ≈ 0.067 vs 0.071). FL beats smart persistence on RMSE by ~13%; MAE is about tied.
 - **Faulty sites:** with frozen sensors or noisy meters, vanilla FedAvg's healthy sites get worse
-  (+2.6% on average over all fault types, +9% with two stale-sensor sites, growing with severity).
+  (+2.4% on average over all fault types, +9% with two stale-sensor sites, growing with severity).
   Reliability-aware FedAvg stays at the clean level (≈ 0%) and beats FedAvg in 19 of 20 runs of
   the faults that hurt FedAvg. Feature corruption and multiplicative meter bias barely hurt either
-  method (a coin flip, 5 of 10).
+  method (a coin flip, 4 of 10).
 - **Event-aware participation** halves communication (≈ −50%) for a small accuracy cost
   (RMSE ≈ 0.065 vs 0.064).
 - **Dropout** up to 50%: training continues; RMSE changes by about 1% or less.
@@ -179,4 +179,4 @@ Run `python audit.py` after every change — it is the regression guard.
 - One weather record shared by all simulated sites (co-located sites at one node); real fleets
   have weather diversity.
 - PV power is modeled, not measured; demand is synthetic; costs are assumptions.
-- Event-aware participation trades a little accuracy (≈ 1.5% RMSE) for half the communication.
+- Event-aware participation trades a little accuracy (≈ 1% RMSE) for half the communication.
