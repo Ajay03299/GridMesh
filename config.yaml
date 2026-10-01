@@ -6,9 +6,9 @@ data:
   path: data/raw/wind.csv        # NSRDB-style 10-min weather + irradiance file
   timestamp_col: auto            # "auto" = detect; or give the column name
   assumed_year: 2019             # file has Month/Day/Hour/Minute but NO year -> assumption
-  target_col: WindSpeed_Class    # original label in the file (not used as the main target)
-  power_col: null                # set if a dataset has MEASURED generation
-  site_col: null                 # set if a dataset already has a site ID
+  target_col: WindSpeed_Class    # optional raw label, only shown by inspect_data.py (null = none)
+  power_col: null                # (legacy) measured power column shown by inspect_data.py
+  site_col: null                 # REAL multi-site data: site-ID column -> one client per site
   task: auto
 
 # What we forecast.
@@ -16,7 +16,10 @@ data:
 #   column             : use an existing continuous column as-is (e.g. measured power)
 target:
   mode: pv_from_irradiance
-  column: null
+  column: null                   # measured power column (used when mode: column)
+  capacity: null                 # installed capacity in the column's unit (null = column max)
+  capacity_col: null             # multi-site data: column with each site's nameplate capacity
+  column_unit_mw: 1.0            # multiply the column by this to get MW (0.001 if it is in kW)
 
 # Simplified PVWatts-style model (horizontal plane, no tilt transposition).
 # Output is per-unit of installed capacity (kW per kWp), clipped at inverter limit.
@@ -94,6 +97,7 @@ event_aware:
   drift_k: 2.0                   # drift if error > mean + k*std of recent history
   window: 5
   min_history: 3
+  min_rel_increase: 0.10         # ...and at least 10% above the recent mean (ignores tiny wobbles)
   stable_participation: 0.5      # chance a STABLE client joins a round (drifting ones always join)
   heartbeat_bytes: 16            # tiny status message (error, quality) sent by skipping clients
 
@@ -125,7 +129,7 @@ reserve:
 
 # ------------------------------------------------- experiment matrix (run_experiments.py)
 experiments:
-  seeds: [42, 43, 44]
+  seeds: [42, 43, 44, 45, 46]
   fault_scenarios:               # sites by letter; severity 1 = values in `faults`
     - {type: target_noise,       sites: [D],    severity: 1}
     - {type: stale,              sites: [D],    severity: 1}

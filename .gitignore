@@ -17,3 +17,4 @@ outputs/*/*
 # OS / editor
 .DS_Store
 .vscode/
+!outputs/tables/comm_scaling.csv

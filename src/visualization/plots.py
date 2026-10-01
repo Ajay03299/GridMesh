@@ -446,6 +446,36 @@ def plot_dropout(out):
           "Mean ± std over seeds.")
 
 
+def plot_scaling(out):
+    d = _read(out / "tables" / "comm_scaling.csv")
+    if d is None:
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3.8))
+    for m in ["fedavg", "reliability_fedavg_event"]:
+        g = d[d.method == m].sort_values("n_sites")
+        axes[0].plot(g.n_sites, g.comm_mb_per_round, color=METHOD[m][0], lw=1.8, marker="o",
+                     ms=5, label=METHOD[m][1])
+        axes[1].plot(g.n_sites, g.global_rmse, color=METHOD[m][0], lw=1.8, marker="o", ms=5,
+                     label=METHOD[m][1])
+        last = g.iloc[-1]
+        axes[0].annotate(f"{last.comm_mb_per_round:.1f} MB", (last.n_sites, last.comm_mb_per_round),
+                         xytext=(-8, 8), textcoords="offset points", ha="right", fontsize=8,
+                         color=INK2)
+    axes[0].set(xlabel="Number of sites", ylabel="Traffic per round (MB)",
+                title="Communication per round")
+    axes[1].set(xlabel="Number of sites", ylabel="Test RMSE (p.u.)", title="Accuracy",
+                ylim=(0, d.global_rmse.max() * 1.3))
+    axes[1].text(0.02, 0.06, f"spread across all runs: {d.global_rmse.max() - d.global_rmse.min():.4f} p.u.",
+                 transform=axes[1].transAxes, fontsize=8, color=MUTED)
+    for ax in axes:
+        _style(ax)
+    axes[0].legend(fontsize=8.5)
+    fig.suptitle("14 · Scaling from 4 to 100 sites (scale simulation)", x=0.01, ha="left",
+                 fontweight="bold")
+    _save(fig, out, "14_comm_scaling.png",
+          "All sites eligible every round. Model update = 31 KB each way; heartbeat = 16 bytes.")
+
+
 def make_all(out, cfg):
     out = Path(out)
     (out / "plots").mkdir(parents=True, exist_ok=True)
@@ -453,7 +483,7 @@ def make_all(out, cfg):
              lambda o: plot_trust(o, cfg), lambda o: plot_weights(o, cfg), plot_participation,
              plot_error_distribution, lambda o: plot_reserve_time(o, cfg),
              lambda o: plot_reserve_tradeoff(o, cfg), lambda o: plot_reserve_bars(o, cfg),
-             lambda o: plot_cost(o, cfg), plot_faults, plot_dropout]
+             lambda o: plot_cost(o, cfg), plot_faults, plot_dropout, plot_scaling]
     for fn in steps:
         fn(out)
     n = len(list((out / "plots").glob("*.png")))

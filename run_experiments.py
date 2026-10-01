@@ -205,6 +205,9 @@ def main():
     print("\n=== FAULT SCENARIOS: healthy-site RMSE increase vs no fault (%) ===")
     piv = fault_t.pivot(index="scenario", columns="method", values="damage_pct_mean")
     print(piv[[m for m in FL if m in piv]].round(2).to_string())
+    from src.evaluation.report import win_counts
+    for line in win_counts(runs):
+        print("  " + line.replace("**", ""))
     print("\n=== SEVERITY SWEEP: healthy-site RMSE ===")
     print(sweep_t.pivot(index="severity", columns="method",
                         values="healthy_rmse_mean").round(4).to_string())

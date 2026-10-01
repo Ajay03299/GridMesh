@@ -99,11 +99,11 @@ def load_dataset(cfg):
                                       dcfg.get("assumed_year", 2019))
     df = df.sort_values("timestamp").reset_index(drop=True)
 
-    target = dcfg["target_col"]
-    if target not in df.columns:
-        raise ValueError(f"Target '{target}' not in columns: {list(df.columns)}")
+    target = dcfg.get("target_col")          # optional raw label, only shown by inspect_data.py
+    if target and target not in df.columns:
+        raise ValueError(f"data.target_col '{target}' not in columns: {list(df.columns)}")
 
-    power_col = dcfg.get("power_col")
+    power_col = dcfg.get("power_col") or (cfg.get("target") or {}).get("column")
     site_col = dcfg.get("site_col")
     time_part_cols = {p.split(" ")[0] for p in ts_source.split("+")}
     excluded = {"timestamp", target, power_col, site_col} | time_part_cols
@@ -113,7 +113,7 @@ def load_dataset(cfg):
     meta = DatasetMeta(
         timestamp_col=ts_source,
         target_col=target,
-        task=_detect_task(df[target], dcfg.get("task", "auto")),
+        task=_detect_task(df[target], dcfg.get("task", "auto")) if target else "regression",
         power_col=power_col,
         site_col=site_col,
         feature_cols=features,

@@ -30,6 +30,40 @@ def _md(df):
     return "\n".join(lines)
 
 
+def win_counts(runs):
+    """Paired comparison: in how many fault runs (scenario x seed) does each method beat FedAvg
+    on healthy-site RMSE? Simple, assumption-free evidence to go with the means."""
+    d = runs[runs.scenario.str.startswith("fault_")]
+    piv = d.pivot_table(index=["scenario", "seed"], columns="method", values="healthy_rmse")
+    lines = []
+    for m in ["reliability_fedavg", "reliability_fedavg_event"]:
+        if m in piv and "fedavg" in piv:
+            pair = piv[[m, "fedavg"]].dropna()
+            wins = int((pair[m] < pair["fedavg"]).sum())
+            lines.append(f"{NAMES[m].strip('*')}: lower healthy-site RMSE than FedAvg in "
+                         f"**{wins} of {len(pair)}** fault runs (scenario × seed).")
+    return lines
+
+
+def _win_line(t):
+    f = t / "exp_all_runs.csv"
+    return "\n\n".join(win_counts(pd.read_csv(f))) if f.exists() else ""
+
+
+def _scaling_section(t):
+    f = t / "comm_scaling.csv"
+    if not f.exists():
+        return ""
+    d = pd.read_csv(f)
+    show = pd.DataFrame({
+        "Sites": d.n_sites, "Method": d.method.map(NAMES).str.strip("*"),
+        "MB per round": d.comm_mb_per_round.round(2),
+        "Participation (%)": (100 * d.participation_rate).round(0).astype(int),
+        "Test RMSE": d.global_rmse.round(4)})
+    return ("\n## 6. Scaling 4 → 100 sites (scale simulation, 1 seed, "
+            f"{int(d.rounds.iloc[0])} rounds)\n" + _md(show) + "\n")
+
+
 def write_results_md(out, cfg):
     out = Path(out)
     t = out / "tables"
@@ -58,6 +92,15 @@ def write_results_md(out, cfg):
     f = pd.DataFrame({"Scenario": [s.replace("fault_", "").replace("_", " ") for s in fp.index],
                       **{NAMES[c].strip("*"): [_pm(a, b, 1) for a, b in zip(fp[c], fs[c])]
                          for c in fl}})
+    runs_file = t / "exp_all_runs.csv"
+    if runs_file.exists():   # paired wins per fault type (same scenario, same seed)
+        pr = pd.read_csv(runs_file)
+        pr = pr[pr.scenario.str.startswith("fault_")].pivot_table(
+            index=["scenario", "seed"], columns="method", values="healthy_rmse")
+        if "reliability_fedavg" in pr and "fedavg" in pr:
+            w = (pr["reliability_fedavg"] < pr["fedavg"]).groupby(level=0)
+            f["Ours beats FedAvg (runs)"] = [f"{int(w.sum()[s])} / {int(w.count()[s])}"
+                                             for s in fp.index]
     sw = sweep.pivot(index="severity", columns="method", values="healthy_rmse_mean").reset_index()
     sw.columns = ["Severity"] + [NAMES[c].strip("*") for c in sw.columns[1:]]
     sw = sw.round(4)
@@ -103,6 +146,8 @@ fault scenarios. *Dropout degradation* = RMSE increase vs. no dropout, averaged 
 Faults are simulated sensor/meter problems present for the whole training run
 (`D` = one site of 4, `CD` = two sites of 4).
 
+{_win_line(t)}
+
 ## 3. Fault severity sweep — healthy-site RMSE (stale sensor on site D)
 {_md(sw)}
 
@@ -117,6 +162,7 @@ n-sigma reserve: `r = max(α·σ_e − μ_e, 0)`, `α = Φ⁻¹(1−δ)`, causal
 per MWh of reserve, {rc['cost_shortfall_per_mwh']:g} units per MWh not served — **simulation
 assumptions**. Demand is **synthetic**.
 
+""" + _scaling_section(t) + """
 ## Plots
 """ + "\n".join(f"![{p}](plots/{p})" for p in plots) + "\n"
     (out / "RESULTS.md").write_text(text)

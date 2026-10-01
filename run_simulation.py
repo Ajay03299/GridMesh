@@ -65,6 +65,13 @@ def parse_sites(value, n_clients, frac, seed):
 
 
 def run_method(name, clients, cfg, seed, faulty=None, verbose=True):
+    res = _run(name, clients, cfg, seed, faulty, verbose)
+    # healthy-site metrics exclude the faulty sites for EVERY method, baselines included
+    res.extra.setdefault("faulty_sites", sorted(clients[i].params.name for i in (faulty or [])))
+    return res
+
+
+def _run(name, clients, cfg, seed, faulty=None, verbose=True):
     if name == "persistence":
         return run_persistence(clients, smart=False)
     if name == "smart_persistence":

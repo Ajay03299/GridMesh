@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from src.data.adapter import load_dataset
-from src.data.virtual_sites import apply_fault, generate_virtual_sites
+from src.data.virtual_sites import apply_fault, generate_virtual_sites, real_sites
 from src.evaluation.metrics import smart_persistence
 
 
@@ -176,18 +176,20 @@ def prepare_clients(cfg, n_clients=4, seed=42, faulty_clients=(), fault_type=Non
     Sites listed in `faulty_clients` (indices) also get a degraded copy `.faulty`."""
     faulty_clients = set(faulty_clients or ())
     base_df, meta = load_dataset(cfg)
-    seg = segment_labels(base_df["timestamp"], cfg["split"])
-    sites = generate_virtual_sites(base_df, cfg, n_clients=n_clients, seed=seed)
+    if cfg["data"].get("site_col"):          # REAL multi-site data: one client per site ID
+        sites = real_sites(base_df, cfg)
+    else:                                    # one weather record -> simulated virtual sites
+        sites = generate_virtual_sites(base_df, cfg, n_clients=n_clients, seed=seed)
 
     clients = []
     for p, sdf in sites:
-        sdf["seg"] = seg
+        sdf["seg"] = segment_labels(sdf["timestamp"], cfg["split"])
         client, scaler = build_client(p, sdf, cfg)
         if p.site_id in faulty_clients:
             bad = apply_fault(sdf, fault_type, cfg["faults"], seed, p.site_id, severity)
             client.faulty, _ = build_client(p, bad, cfg, scaler=scaler)
         clients.append(client)
-    ts = pd.Series(base_df["timestamp"])
+    ts, seg = sites[0][1]["timestamp"].reset_index(drop=True), sites[0][1]["seg"].to_numpy()
     info = {"mode": cfg["split"].get("mode", "chronological")}
     for name, k in (("train", TRAIN), ("val", VAL), ("test", TEST)):
         part = ts[seg == k]

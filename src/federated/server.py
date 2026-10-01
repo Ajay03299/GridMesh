@@ -38,8 +38,10 @@ def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
     gp = get_params(global_model)
     model_bytes = n_bytes(gp)
     last_seen = {n: gp for n in names}
+    last_seen_aggs = {n: 0 for n in names}   # how many aggregations the model a site last saw had
     agg = FedAvg() if method == "fedavg" else ReliabilityAwareFedAvg(cfg["reliability"])
-    detector = DriftDetector(ecfg["drift_k"], ecfg["window"], ecfg["min_history"])
+    detector = DriftDetector(ecfg["drift_k"], ecfg["window"], ecfg["min_history"],
+                             ecfg.get("min_rel_increase", 0.0))
     drifting, rows, rounds = set(), [], []
     best_score, best_params, best_round = np.inf, gp, 0
 
@@ -52,7 +54,7 @@ def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
                                                   drifting, r)
         updates = [clients[n].fit(gp, r) for n in active]
         for n in active:
-            last_seen[n] = gp
+            last_seen[n], last_seen_aggs[n] = gp, r - 1
 
         heartbeats = {}
         if event_aware:   # everyone who did not train and did not drop out reports its error
@@ -67,7 +69,10 @@ def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
         weights, info = ({}, {})
         received = gp                       # the model the clients just evaluated
         if aggregated:
-            weights, info = agg.weights(updates, peer_errors=errors)
+            # a heartbeat only informs trust if it scores a model that was trained at least once
+            # (otherwise a site that skipped early looks bad just for holding the untrained model)
+            peer = {n: e for n, e in errors.items() if n in heartbeats and last_seen_aggs[n] >= 1}
+            weights, info = agg.weights(updates, peer_errors=peer)
             gp = weighted_average([u.params for u in updates], [weights[u.name] for u in updates])
         # validation score of the RECEIVED model, weighted like this method's aggregation
         score = np.nan

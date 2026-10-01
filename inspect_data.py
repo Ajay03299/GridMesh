@@ -46,8 +46,10 @@ def main():
     for c in df.columns:
         print(f"  {c:<28} {str(df[c].dtype):<16} {df[c].isna().mean() * 100:6.2f}%")
 
-    print("\nTARGET DISTRIBUTION:")
-    if meta.task == "classification":
+    print("\nRAW LABEL DISTRIBUTION:")
+    if not meta.target_col:
+        print("  (data.target_col not set)")
+    elif meta.task == "classification":
         counts = df[meta.target_col].value_counts().sort_index()
         pct = (counts / counts.sum() * 100).round(2)
         print(pd.DataFrame({"count": counts, "pct": pct}).to_string())

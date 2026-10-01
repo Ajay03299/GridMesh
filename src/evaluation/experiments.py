@@ -72,12 +72,19 @@ def run_persistence(clients, smart=True):
                   val_preds={c.params.name: fn(c.val) for c in clients})
 
 
+def _site_data(c):
+    """The data a site actually holds: its degraded copy in fault experiments (baselines see the
+    fault for the whole training run). Evaluation always uses the clean test data."""
+    return c.faulty if c.faulty is not None else c
+
+
 def run_local_only(clients, cfg, seed):
     """One independent model per site, trained only on that site's data."""
     preds, vpreds, hist = {}, {}, []
     for c in clients:
-        model = build_model(c.train.X.shape[1], cfg["model"], seed)
-        model, h = fit_with_best_val(model, c.train, c.val, cfg["model"], seed)
+        d = _site_data(c)
+        model = build_model(d.train.X.shape[1], cfg["model"], seed)
+        model, h = fit_with_best_val(model, d.train, d.val, cfg["model"], seed)
         preds[c.params.name] = predict(model, c.test)
         vpreds[c.params.name] = predict(model, c.val)
         hist += [{"site": c.params.name, **r} for r in h]
@@ -92,7 +99,8 @@ def _pool(splits):
 def run_centralized(clients, cfg, seed):
     """Upper-bound benchmark: pool every site's (already standardised) data in one place.
     Not the proposed architecture — raw data would have to leave the sites."""
-    train, val = _pool([c.train for c in clients]), _pool([c.val for c in clients])
+    train = _pool([_site_data(c).train for c in clients])
+    val = _pool([_site_data(c).val for c in clients])
     model = build_model(train.X.shape[1], cfg["model"], seed)
     model, hist = fit_with_best_val(model, train, val, cfg["model"], seed)
     return Result("centralized", {c.params.name: predict(model, c.test) for c in clients}, hist,

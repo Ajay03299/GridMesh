@@ -68,7 +68,12 @@ def build_site_frame(base_df, p: SiteParams, cfg, seed):
     n = len(df)
 
     # 1) PV power from the TRUE (clean) weather — the plant sees the real sun.
-    pv = pv_power_pu(base_df["GHI"], base_df["Temperature"], p.derate, p.temp_coeff, cfg["pv_model"])
+    #    target.mode "column": use a MEASURED power column instead (scaled to p.u.).
+    if cfg.get("target", {}).get("mode") == "column":
+        pv = measured_pu(base_df, cfg)
+    else:
+        pv = pv_power_pu(base_df["GHI"], base_df["Temperature"], p.derate, p.temp_coeff,
+                         cfg["pv_model"])
     meter_noise = rng.normal(0, p.target_noise_std, n) * (pv > 0)
     df["pv"] = np.clip(pv + meter_noise, 0, cfg["pv_model"]["inverter_clip"])
 
@@ -129,3 +134,44 @@ def apply_fault(site_df, fault_type, fault_cfg, seed, site_id, severity=1.0):
     else:
         raise ValueError(f"fault_type must be one of {FAULT_TYPES}")
     return df
+
+
+def measured_pu(df, cfg):
+    """Measured power column -> p.u. of installed capacity (target.capacity, else column max)."""
+    col = cfg["target"].get("column")
+    if not col or col not in df.columns:
+        raise ValueError(f"target.column '{col}' not found in the data")
+    cap = cfg["target"].get("capacity") or float(df[col].max())
+    return np.clip(df[col].to_numpy(float) / cap, 0, 1)
+
+
+def real_sites(base_df, cfg):
+    """REAL multi-site data (data.site_col is set): one client per site ID, no simulated noise.
+    Every site needs the same weather columns as the main file, e.g. NSRDB weather downloaded
+    for the site's coordinates and joined with the plant's measured power."""
+    site_col, tcfg = cfg["data"]["site_col"], cfg["target"]
+    sensor_cols = [c for c in IRRADIANCE_COLS + OTHER_SENSOR_COLS if c in base_df.columns]
+    out = []
+    groups = sorted(base_df.groupby(site_col), key=lambda g: str(g[0]))
+    for k, (sid, g) in enumerate(groups):
+        df = g.sort_values("timestamp").reset_index(drop=True)
+        if tcfg.get("mode") == "column":
+            if tcfg.get("capacity_col"):          # nameplate capacity per site (best)
+                cap = float(df[tcfg["capacity_col"]].iloc[0])
+            else:                                 # one global value, else the observed peak
+                cap = tcfg.get("capacity") or float(df[tcfg["column"]].max())
+            df["pv"] = np.clip(df[tcfg["column"]].to_numpy(float) / cap, 0, 1)
+            cap_mw = cap * float(tcfg.get("column_unit_mw", 1.0))
+        else:
+            vs = cfg["virtual_sites"]
+            df["pv"] = pv_power_pu(df["GHI"], df["Temperature"], float(np.mean(vs["derate"])),
+                                   float(np.mean(vs["temp_coeff"])), cfg["pv_model"])
+            cap_mw = 1.0
+        df.attrs["missing_frac"] = float(df[sensor_cols].isna().to_numpy().mean())
+        df[sensor_cols] = df[sensor_cols].ffill().bfill()
+        nan = float("nan")
+        out.append((SiteParams(site_id=k, name=str(sid), capacity_mw=round(cap_mw, 4),
+                               derate=nan, temp_coeff=nan, sensor_noise_std=0.0,
+                               sensor_bias=0.0, missing_rate=0.0, target_noise_std=0.0,
+                               history_fraction=1.0), df))
+    return out
