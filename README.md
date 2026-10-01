@@ -2,8 +2,8 @@
 
 Hackathon prototype · Yuva Yodha Energy Tech Hackathon · Grid Reliability & Renewable Intermittency track.
 
-**Status:** Phases 1–8 done (data → baselines → FedAvg → reliability-aware FL → faults/dropout).
-Next: severity sweep + seeds, reserve simulator (Phase 9), plots (10), full README (11).
+**Status:** Phases 1–9 done (data → baselines → FedAvg → reliability-aware FL → faults/dropout → reserve node).
+Next: severity sweep + seeds, plots (10), 100-client check, dashboard, full README (11).
 
 ## Idea
 Each PV site keeps its data locally and trains a small forecaster. Sites collaborate via
@@ -30,8 +30,14 @@ python run_simulation.py --clients 4 --rounds 20 --methods fl     # Phases 6-7
 python run_simulation.py --clients 4 --rounds 20 --methods fl --faulty-client D --fault-type stale
 python run_simulation.py --clients 4 --rounds 20 --methods fl --dropout-rate 0.25
 python run_simulation.py --clients 4 --split chronological        # seasonal-shift stress test
-python run_simulation.py --clients 4            # everything (baselines + FL), ~75 s
+python run_simulation.py --clients 4            # everything (baselines + FL), ~15-60 s
+python run_reserve_sim.py                       # Phase 9: fixed 20% vs n-sigma (+ delta sweep)
+python run_reserve_sim.py --policy fixed20
+python run_reserve_sim.py --policy nsigma --delta 0.05
 ```
+`run_reserve_sim.py` reads the forecasts written by `run_simulation.py` (default: reliability-aware FedAvg;
+change with `--method fedavg` etc.). Numbers can differ in the 4th decimal between machines
+(PyTorch floating point on Apple Silicon vs Linux); reruns on the same machine are identical.
 Outputs: `outputs/tables/results_*.csv` (metrics), `outputs/logs/clients_*.csv`
 (per-round weight / trust / drift / participation per site), `outputs/metrics/run_*.json`
 (config + seed + site parameters + results, for reproducibility).
@@ -46,6 +52,8 @@ Fault types: `feature_corruption`, `target_noise`, `stale`, `bias`. `--faulty-cl
 | PV power target | **Modeled** from real GHI + temperature (simplified PVWatts, horizontal plane) — not measured |
 | 4 / 100 virtual sites | **Simulated** heterogeneity: capacity, derate, temp. coeff., sensor noise/bias/dropouts, meter noise, history length. All sites share the one real weather record |
 | Faults | **Simulated** sensor/meter degradation (no cyber attacks) |
+| Demand at the node | **SYNTHETIC** daily curve (base + morning/evening peaks) |
+| Reserve / shortfall cost coefficients | **Simulation assumptions** (1 vs 20 cost units per MWh) |
 
 ## Key design decisions (and why)
 1. **Solar PV regression, not wind classification.** The file contains real irradiance, so a
@@ -94,6 +102,27 @@ Test = daytime, all months, p.u. of capacity.
 - 25% client dropout: training continues, RMSE 0.0657 (vs 0.0656).
 - Seasonal-shift stress test (train Jan–Sep, test Nov–Dec): learned models over-forecast
   (+0.02 p.u.) and lose to smart persistence (RMSE 0.052 vs 0.043). Real risk; motivates drift handling.
+
+## Reserve node (Phase 9)
+All sites feed one aggregation node: `forecast_MW = Σ capacity_k · forecast_pu_k` (same for actual).
+Error `e = actual − forecast`. Policy A: `r = 0.20 · forecast`. Policy B (n-sigma, inspired by
+Khaing, Kannan & Rao, *Clean Energy* 2026): `r = max(α·σ_e − μ_e, 0)`, `α = Φ⁻¹(1−δ)`, with μ_e, σ_e
+from the last 6 h of daytime errors that were **already observable** when the forecast was issued.
+Rolling statistics warm up on the validation days, which directly precede the test days each month.
+
+Measured (4 sites, 51.1 MW, reliability-aware forecasts, daytime test intervals; Linux run):
+
+| Policy | Reserve MWh | Not served MWh | Availability | Cost (assumed units) |
+|---|---|---|---|---|
+| Fixed 20% | 2061 | 204 | 87.5% | 6132 |
+| n-sigma δ=0.10 | 1750 | 195 | 87.9% (target 90%) | 5645 |
+| n-sigma δ=0.05 | 2228 | 155 | 90.7% (target 95%) | 5325 |
+| n-sigma δ=0.02 | 2767 | 121 | 93.3% (target 98%) | 5195 |
+
+- δ=0.10 holds 15% less reserve than fixed 20% **and** has less energy not served.
+- n-sigma **misses its own availability target** at every δ: errors are heavier-tailed than Gaussian
+  and a rolling window lags sudden cloud ramps. Reported as measured, not hidden.
+- Cost ranking depends on the assumed 20:1 shortfall/reserve cost ratio.
 
 ## Honesty notes
 - Raw training data stays local; only model parameters and a few summary numbers are exchanged.

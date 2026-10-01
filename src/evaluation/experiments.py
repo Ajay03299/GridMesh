@@ -19,6 +19,7 @@ class Result:
     method: str
     preds: dict                      # site name -> np.ndarray test forecast (p.u.)
     history: list = field(default_factory=list)   # training/round log
+    val_preds: dict = field(default_factory=dict) # site name -> validation forecast (reserve warm-up)
     extra: dict = field(default_factory=dict)     # comms bytes, weights, etc.
 
 
@@ -66,18 +67,20 @@ def evaluate(result, clients):
 def run_persistence(clients, smart=True):
     fn = smart_persistence_forecast if smart else persistence_forecast
     return Result("smart_persistence" if smart else "persistence",
-                  {c.params.name: fn(c.test) for c in clients})
+                  {c.params.name: fn(c.test) for c in clients},
+                  val_preds={c.params.name: fn(c.val) for c in clients})
 
 
 def run_local_only(clients, cfg, seed):
     """One independent model per site, trained only on that site's data."""
-    preds, hist = {}, []
+    preds, vpreds, hist = {}, {}, []
     for c in clients:
         model = build_model(c.train.X.shape[1], cfg["model"], seed)
         model, h = fit_with_best_val(model, c.train, c.val, cfg["model"], seed)
         preds[c.params.name] = predict(model, c.test)
+        vpreds[c.params.name] = predict(model, c.val)
         hist += [{"site": c.params.name, **r} for r in h]
-    return Result("local_only", preds, hist)
+    return Result("local_only", preds, hist, val_preds=vpreds)
 
 
 def _pool(splits):
@@ -91,16 +94,24 @@ def run_centralized(clients, cfg, seed):
     train, val = _pool([c.train for c in clients]), _pool([c.val for c in clients])
     model = build_model(train.X.shape[1], cfg["model"], seed)
     model, hist = fit_with_best_val(model, train, val, cfg["model"], seed)
-    return Result("centralized", {c.params.name: predict(model, c.test) for c in clients}, hist)
+    return Result("centralized", {c.params.name: predict(model, c.test) for c in clients}, hist,
+                  val_preds={c.params.name: predict(model, c.val) for c in clients})
 
 
 def save_predictions(result, clients, path):
-    """Long-format CSV of test forecasts — input for the reserve simulator."""
+    """Long-format CSV of val + test forecasts — input for the reserve simulator.
+    Validation rows directly precede test rows inside each month, so the reserve
+    simulator can warm up its rolling error statistics without touching test data."""
     rows = []
     for c in clients:
-        rows.append(pd.DataFrame({
-            "time": c.test.time, "site": c.params.name, "capacity_mw": c.params.capacity_mw,
-            "actual_pu": c.test.y, "forecast_pu": result.preds[c.params.name],
-            "daytime": c.test.daytime,
-        }))
+        name = c.params.name
+        for split_name, split, pred in (("val", c.val, result.val_preds.get(name)),
+                                        ("test", c.test, result.preds[name])):
+            if pred is None:
+                continue
+            rows.append(pd.DataFrame({
+                "time": split.time, "split": split_name, "site": name,
+                "capacity_mw": c.params.capacity_mw,
+                "actual_pu": split.y, "forecast_pu": pred, "daytime": split.daytime,
+            }))
     pd.concat(rows).to_csv(path, index=False)

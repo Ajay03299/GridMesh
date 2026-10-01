@@ -103,3 +103,20 @@ faults:
   target_noise: {std: 0.10}                                      # noisy power meter, p.u.
   stale: {hold_steps: 12}                                        # SCADA values frozen in 2-h blocks
   bias: {scale: 1.25}                                            # miscalibrated power meter
+
+# ------------------------------------------------------ reserve (one aggregation node)
+# ALL numbers below are SIMULATION ASSUMPTIONS, not market or utility data.
+reserve:
+  forecast_method: reliability_fedavg   # which forecast feeds the node
+  fixed_fraction: 0.20           # policy A: reserve = 20% of the renewable forecast
+  delta: 0.05                    # policy B: target shortfall probability (alpha = Phi^-1(1-delta))
+  delta_sweep: [0.02, 0.05, 0.10]
+  window: 36                     # rolling window of past DAYTIME errors (36 x 10 min = 6 h)
+  min_periods: 12
+  cost_reserve_per_mwh: 1.0      # cost units per MWh of reserve held (assumption)
+  cost_shortfall_per_mwh: 20.0   # cost units per MWh not served (assumption, ~VoLL ratio)
+  demand:                        # SYNTHETIC demand curve (no real demand data available)
+    base_mw_per_mw_capacity: 0.8 # base load relative to total installed renewable capacity
+    morning_peak: 0.25           # extra load at ~09:00, relative to base
+    evening_peak: 0.45           # extra load at ~19:30, relative to base
+    noise_std: 0.02

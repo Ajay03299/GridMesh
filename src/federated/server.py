@@ -96,6 +96,7 @@ def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
 
     name = method + ("_event" if event_aware else "")
     preds = {n: predict(global_model, clients[n].data.test) for n in names}   # clean test data
-    return Result(name, preds, history=rows,
+    vpreds = {n: predict(global_model, clients[n].data.val) for n in names}
+    return Result(name, preds, history=rows, val_preds=vpreds,
                   extra={"rounds": pd.DataFrame(rounds), "model_bytes": model_bytes,
                          "faulty_site": faulty_name})

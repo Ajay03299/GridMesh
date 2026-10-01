@@ -33,9 +33,14 @@ def main():
     print(f"RESOLUTION    : most common step = {step.mode().iloc[0]}")
     print(f"GAPS          : {(step != step.mode().iloc[0]).sum():,} irregular steps")
     print(f"DUPLICATE TS  : {ts.duplicated().sum():,}")
-    print(f"TARGET        : {meta.target_col}  (task = {meta.task})")
-    print(f"REAL POWER?   : {meta.has_real_power}"
-          + ("" if meta.has_real_power else "  -> reserve sim will need a SYNTHETIC power series"))
+    print(f"RAW LABEL     : {meta.target_col}  (task = {meta.task})")
+    print(f"MEASURED POWER: {meta.has_real_power}")
+    mode = cfg.get("target", {}).get("mode", "column")
+    if mode == "pv_from_irradiance":
+        print("FORECAST TARGET (config): PV power MODELED from the real GHI + temperature "
+              "(simplified PVWatts) -> used for FL and the reserve simulation")
+    else:
+        print(f"FORECAST TARGET (config): column '{cfg['target'].get('column')}'")
 
     print("\nCOLUMNS (dtype, % missing):")
     for c in df.columns:

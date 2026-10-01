@@ -7,6 +7,7 @@ Handles both:
 Nothing here invents data. It only loads, detects columns and reports.
 """
 from dataclasses import dataclass, field
+from typing import Optional
 from pathlib import Path
 
 import pandas as pd
@@ -22,8 +23,8 @@ class DatasetMeta:
     timestamp_col: str
     target_col: str
     task: str                      # "classification" | "regression"
-    power_col: str | None = None
-    site_col: str | None = None
+    power_col: Optional[str] = None
+    site_col: Optional[str] = None
     feature_cols: list = field(default_factory=list)
     has_real_power: bool = False   # False => reserve sim must use a SYNTHETIC power series
 
