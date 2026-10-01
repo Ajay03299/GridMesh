@@ -43,7 +43,7 @@ python -m streamlit run dashboard.py   # demo dashboard in the browser (Ctrl+C t
 | `python audit.py` | 21 correctness checks: leakage, maths, reserve causality and calibration, faults, determinism, real-data path — run before every push |
 | `python build_dashboard.py` + `python -m streamlit run dashboard.py` | dashboard: NORMAL / FAULTY CLIENT / CLIENT DROPOUT / WEATHER-REGIME SHIFT |
 
-Options: `--fault-type feature_corruption | target_noise | stale | bias`, `--fault-severity 2`,
+Options: `--fault-type stale (default) | target_noise | bias | feature_corruption`, `--fault-severity 2`,
 `--faulty-frac 0.2` (random 20% of sites), `--seed`, `--rounds`. Sites are lettered A, B, C…
 All tunable numbers live in `config.yaml`.
 

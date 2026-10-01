@@ -81,6 +81,8 @@ def write_results_md(out, cfg):
         "MAE": [_pm(a, b) for a, b in zip(main.global_mae_mean, main.global_mae_std)],
         "Worst-site RMSE": [_pm(a, b) for a, b in zip(main.worst_site_rmse_mean,
                                                       main.worst_site_rmse_std)],
+        "Rounds to converge": [f"{v:.1f}" if pd.notna(v) else "–"
+                               for v in main.rounds_to_converge_mean],
         "Comm. (MB)": [f"{v:.2f}" if pd.notna(v) else "–" for v in main.total_comm_mb_mean],
         "Fault damage (%)": [_pm(a, b, 1) for a, b in zip(main.damage_pct_mean, main.damage_pct_std)],
         "Dropout degradation (%)": [_pm(a, b, 1) for a, b in
@@ -139,6 +141,8 @@ Raw data stays at each site; no secure aggregation or differential privacy is im
 
 *Fault damage* = healthy-site RMSE increase vs. the same sites without faults, averaged over all
 fault scenarios. *Dropout degradation* = RMSE increase vs. no dropout, averaged over dropout rates.
+*Rounds to converge* = first federated round whose global model is within 2% of its best
+validation error.
 
 ## 2. Faulty-client scenarios — healthy-site RMSE increase (%)
 {_md(f)}

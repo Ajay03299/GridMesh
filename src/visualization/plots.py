@@ -14,6 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
+from matplotlib.ticker import MaxNLocator  # noqa: E402
 from scipy.stats import norm  # noqa: E402
 
 INK, INK2, MUTED, GRID, AXIS = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7"
@@ -74,12 +75,18 @@ def plot_convergence(out):
             continue
         c, label = METHOD[m]
         ax.plot(d["round"], np.sqrt(d["val_mse_healthy"]), color=c, lw=1.8, label=label)
+        kept = int(d.loc[d["val_reported"].idxmin(), "round"]) - 1   # model the server keeps
+        if kept >= 1:
+            ax.plot(kept, np.sqrt(d.loc[d["round"] == kept, "val_mse_healthy"].iloc[0]), "o",
+                    color=c, ms=8, mec=SURFACE, mew=1.5, zorder=3)
+    ax.plot([], [], "o", color=MUTED, ms=8, label="round the server keeps")
     ax.set(xlabel="Federated round", ylabel="Validation RMSE (p.u. of capacity)",
            title="1 · Convergence — global model on every site's validation data")
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     _style(ax)
     ax.legend()
-    _save(fig, out, "01_convergence.png", "First seed, daytime targets. The server keeps the round "
-          "with the lowest client-reported validation error (no test data used).")
+    _save(fig, out, "01_convergence.png", "First seed. Dots = round kept by the server (lowest "
+          "client-reported validation error); later rounds over-fit.")
 
 
 def plot_actual_vs_pred(out, cfg):
@@ -106,7 +113,7 @@ def plot_actual_vs_pred(out, cfg):
     ticks = [i for i, t in enumerate(win.index) if t.hour == 12 and t.minute == 0]
     ax.set_xticks(ticks, [win.index[i].strftime("%d %b") for i in ticks])
     ax.set(ylabel="Node PV power (MW)",
-           title=f"2 · Actual vs forecast at the aggregation node — example test days")
+           title="2 · Actual vs forecast at the aggregation node — example test days")
     _style(ax)
     ax.legend(loc="upper left")
     _save(fig, out, "02_actual_vs_predicted.png",
@@ -169,6 +176,7 @@ def _site_lines(ax, d, value, faulty):
         y = sum(x[0] for x in grp) / len(grp)
         ax.annotate(txt, (grp[0][3], y), xytext=(4, 0), textcoords="offset points",
                     fontsize=8, color=FAULT if bad else INK2, va="center")
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
 
 def _fault_scenario(out, cfg):

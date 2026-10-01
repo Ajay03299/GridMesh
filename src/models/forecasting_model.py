@@ -82,12 +82,18 @@ def mse_on(model, split):
     return float(np.mean((pred[m] - split.y[m]) ** 2))
 
 
-def fit_with_best_val(model, train, val, mcfg, seed, epochs=None):
-    """Train for `epochs`, keep the checkpoint with the lowest validation MSE."""
+def fit_with_best_val(model, train, val, mcfg, seed, epochs=None, frac=1.0):
+    """Train for `epochs`, keep the checkpoint with the lowest validation MSE.
+    frac < 1: each epoch trains on a random share of the rows (pooled benchmark only)."""
     epochs = epochs or mcfg["epochs"]
     best, best_state, history = np.inf, None, []
+    rng = np.random.default_rng(seed)
     for ep in range(epochs):
-        tr = train_epochs(model, train.X, train.y_model, 1, mcfg, seed + ep)
+        X, y = train.X, train.y_model
+        if frac < 1.0:
+            take = rng.choice(len(y), max(1, int(len(y) * frac)), replace=False)
+            X, y = X[take], y[take]
+        tr = train_epochs(model, X, y, 1, mcfg, seed + ep)
         v = mse_on(model, val)
         history.append({"epoch": ep + 1, "train_mse": tr, "val_mse": v})
         if v < best:

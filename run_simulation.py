@@ -34,7 +34,7 @@ def parse_args():
                     help="make this share of sites faulty (picked at random with the seed)")
     ap.add_argument("--fault-severity", type=float, default=1.0,
                     help="0 = no fault, 1 = config values, 2 = twice as strong")
-    ap.add_argument("--fault-type", default="feature_corruption",
+    ap.add_argument("--fault-type", default="stale",
                     choices=["feature_corruption", "target_noise", "stale", "bias"])
     ap.add_argument("--fault-start", type=int, default=None,
                     help="round at which the fault appears (override faults.start_round)")

@@ -15,7 +15,7 @@ import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from src.data.adapter import load_config  # noqa: E402
-from src.visualization.plots import (AXIS, FAULT, GRID, HEALTHY_GREYS, INK, INK2, METHOD,  # noqa: E402
+from src.visualization.plots import (AXIS, FAULT, GRID, HEALTHY_GREYS, INK, METHOD,  # noqa: E402
                                      MUTED, SURFACE, _style)
 
 OURS = "reliability_fedavg_event"
@@ -191,6 +191,7 @@ with b1:
                 lw=2 if bad else 1.2, label=f"{site}" + (" (faulty)" if bad else ""))
     ax.axhline(cfg["reliability"]["quarantine_below"], color=AXIS, lw=0.8)
     ax.set(ylim=(-0.03, 1.08), xlabel="round", title="Client reliability (trust)")
+    ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
     _style(ax)
     ax.legend(fontsize=7, ncol=2)
     st.pyplot(f, clear_figure=True)
@@ -218,6 +219,7 @@ with b3:
             ax.plot(g["round"], w, color=FAULT if bad else HEALTHY_GREYS[j % 4], lw=1.2,
                     marker="o", ms=3, label=site)
         ax.set(xlabel="round", title=ttl)
+        ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
         _style(ax)
     axes[0].set_ylabel("aggregation weight")
     axes[1].legend(fontsize=7)

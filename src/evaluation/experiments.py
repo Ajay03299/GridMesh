@@ -102,7 +102,12 @@ def run_centralized(clients, cfg, seed):
     train = _pool([_site_data(c).train for c in clients])
     val = _pool([_site_data(c).val for c in clients])
     model = build_model(train.X.shape[1], cfg["model"], seed)
-    model, hist = fit_with_best_val(model, train, val, cfg["model"], seed)
+    # Virtual sites share one weather record, so the pool repeats every weather day once per
+    # site and one epoch over 100 sites = 25 passes over the same days (over-training). Each
+    # epoch therefore uses a random 4/N share of the rows: same budget and validation checks
+    # as with 4 sites, identical results at 4 sites. Real multi-site data keeps full epochs.
+    frac = 1.0 if cfg["data"].get("site_col") else min(1.0, 4 / len(clients))
+    model, hist = fit_with_best_val(model, train, val, cfg["model"], seed, frac=frac)
     return Result("centralized", {c.params.name: predict(model, c.test) for c in clients}, hist,
                   val_preds={c.params.name: predict(model, c.val) for c in clients})
 

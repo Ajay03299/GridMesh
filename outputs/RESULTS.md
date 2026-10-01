@@ -10,18 +10,20 @@ irradiance · sites and faults SIMULATED · demand SYNTHETIC · costs ASSUMED.
 Raw data stays at each site; no secure aggregation or differential privacy is implemented.
 
 ## 1. Forecasting (no faults)
-| Method | RMSE | MAE | Worst-site RMSE | Comm. (MB) | Fault damage (%) | Dropout degradation (%) |
-|---|---|---|---|---|---|---|
-| Persistence | 0.0908 ± 0.0015 | 0.0673 ± 0.0011 | 0.0941 ± 0.0016 | – | – | – |
-| Smart persistence | 0.0735 ± 0.0011 | 0.0362 ± 0.0007 | 0.0761 ± 0.0013 | – | – | – |
-| Local-only | 0.0666 ± 0.0025 | 0.0386 ± 0.0034 | 0.0712 ± 0.0049 | – | – | – |
-| Centralized (pooled data) | 0.0643 ± 0.0008 | 0.0367 ± 0.0012 | 0.0667 ± 0.0015 | – | – | – |
-| FedAvg | 0.0642 ± 0.0013 | 0.0360 ± 0.0015 | 0.0666 ± 0.0016 | 5.08 | 2.4 ± 3.7 | 0.5 ± 0.8 |
-| **Reliability-aware FedAvg (ours)** | 0.0641 ± 0.0013 | 0.0366 ± 0.0019 | 0.0666 ± 0.0017 | 5.08 | 0.1 ± 0.9 | 0.1 ± 0.8 |
-| **Ours + event-aware participation** | 0.0648 ± 0.0013 | 0.0372 ± 0.0013 | 0.0669 ± 0.0013 | 2.55 | -0.1 ± 1.8 | -0.5 ± 1.8 |
+| Method | RMSE | MAE | Worst-site RMSE | Rounds to converge | Comm. (MB) | Fault damage (%) | Dropout degradation (%) |
+|---|---|---|---|---|---|---|---|
+| Persistence | 0.0908 ± 0.0015 | 0.0673 ± 0.0011 | 0.0941 ± 0.0016 | – | – | – | – |
+| Smart persistence | 0.0735 ± 0.0011 | 0.0362 ± 0.0007 | 0.0761 ± 0.0013 | – | – | – | – |
+| Local-only | 0.0666 ± 0.0025 | 0.0386 ± 0.0034 | 0.0712 ± 0.0049 | – | – | – | – |
+| Centralized (pooled data) | 0.0643 ± 0.0008 | 0.0367 ± 0.0012 | 0.0667 ± 0.0015 | – | – | – | – |
+| FedAvg | 0.0642 ± 0.0013 | 0.0360 ± 0.0015 | 0.0666 ± 0.0016 | 2.6 | 5.08 | 2.4 ± 3.7 | 0.5 ± 0.8 |
+| **Reliability-aware FedAvg (ours)** | 0.0641 ± 0.0013 | 0.0366 ± 0.0019 | 0.0666 ± 0.0017 | 2.8 | 5.08 | 0.1 ± 0.9 | 0.1 ± 0.8 |
+| **Ours + event-aware participation** | 0.0648 ± 0.0013 | 0.0372 ± 0.0013 | 0.0669 ± 0.0013 | 3.4 | 2.55 | -0.1 ± 1.8 | -0.5 ± 1.8 |
 
 *Fault damage* = healthy-site RMSE increase vs. the same sites without faults, averaged over all
 fault scenarios. *Dropout degradation* = RMSE increase vs. no dropout, averaged over dropout rates.
+*Rounds to converge* = first federated round whose global model is within 2% of its best
+validation error.
 
 ## 2. Faulty-client scenarios — healthy-site RMSE increase (%)
 | Scenario | FedAvg | Reliability-aware FedAvg (ours) | Ours + event-aware participation | Ours beats FedAvg (runs) |

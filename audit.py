@@ -15,8 +15,8 @@ from scipy.stats import norm
 
 from run_simulation import run_method
 from src.data.adapter import load_config, load_dataset
-from src.data.preprocessing import (TEST, TRAIN, VAL, add_derived_features, make_windows,
-                                    prepare_clients, segment_labels)
+from src.data.preprocessing import (add_derived_features, make_windows, prepare_clients,
+                                    segment_labels)
 from src.data.pv_model import pv_power_pu
 from src.data.virtual_sites import (apply_fault, generate_virtual_sites, measured_pu,
                                     sample_site_params)

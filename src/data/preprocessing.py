@@ -219,5 +219,5 @@ if __name__ == "__main__":
         tr, va, te = (set(pd.to_datetime(x.time)) for x in (c.train, c.val, c.test))
         assert not (tr & va) and not (tr & te) and not (va & te)
     months = sorted(pd.to_datetime(clients[0].test.time).month.unique())
-    print(f"\nOK: no train/val/test overlap; no window crosses a split boundary.")
+    print("\nOK: no train/val/test overlap; no window crosses a split boundary.")
     print(f"Test covers months: {months}")
