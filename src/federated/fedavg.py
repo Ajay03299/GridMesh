@@ -10,7 +10,7 @@ def weighted_average(param_lists, weights):
 class FedAvg:
     name = "fedavg"
 
-    def weights(self, updates, state=None):
-        """Return {client: normalised weight}. `state` unused (kept for a common interface)."""
+    def weights(self, updates, peer_errors=None):
+        """Return ({client: normalised weight}, info). `peer_errors` unused (common interface)."""
         total = sum(u.n_samples for u in updates)
         return {u.name: u.n_samples / total for u in updates}, {}

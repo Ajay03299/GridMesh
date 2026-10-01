@@ -4,9 +4,15 @@ __pycache__/
 .venv/
 venv/
 
-# Generated outputs (regenerate by running the scripts)
-outputs/**/*
-!outputs/**/.gitkeep
+# Generated outputs: ignore everything except the shareable results
+outputs/*/*
+!outputs/plots/*.png
+!outputs/metrics/summary.json
+!outputs/tables/comparison_main.csv
+!outputs/tables/fault_scenarios.csv
+!outputs/tables/severity_sweep.csv
+!outputs/tables/dropout.csv
+!outputs/tables/reserve_comparison.csv
 
 # OS / editor
 .DS_Store

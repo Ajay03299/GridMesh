@@ -29,9 +29,15 @@ def parse_args():
     ap.add_argument("--seed", type=int, default=None, help="override config seed")
     ap.add_argument("--rounds", type=int, default=None, help="override federated.rounds")
     ap.add_argument("--faulty-client", default=None,
-                    help="site index (0-based) or letter, e.g. 3 or D (3 = D)")
+                    help="site index (0-based) or letter, comma list allowed: D | 3 | C,D")
+    ap.add_argument("--faulty-frac", type=float, default=None,
+                    help="make this share of sites faulty (picked at random with the seed)")
+    ap.add_argument("--fault-severity", type=float, default=1.0,
+                    help="0 = no fault, 1 = config values, 2 = twice as strong")
     ap.add_argument("--fault-type", default="feature_corruption",
                     choices=["feature_corruption", "target_noise", "stale", "bias"])
+    ap.add_argument("--fault-start", type=int, default=None,
+                    help="round at which the fault appears (override faults.start_round)")
     ap.add_argument("--dropout-rate", type=float, default=None)
     ap.add_argument("--client-fraction", type=float, default=None)
     ap.add_argument("--quiet", action="store_true", help="hide per-round logs")
@@ -43,10 +49,19 @@ def parse_args():
     return ap.parse_args()
 
 
-def parse_site(value):
-    if value is None:
-        return None
-    return int(value) if value.isdigit() else ord(value.upper()) - ord("A")
+def parse_sites(value, n_clients, frac, seed):
+    """'D' / '3' / 'C,D' -> [3] / [3] / [2, 3];  or a random `frac` of all sites."""
+    if frac:
+        import numpy as np
+        k = max(1, int(round(frac * n_clients)))
+        return sorted(np.random.default_rng([seed, 3]).choice(n_clients, k, replace=False).tolist())
+    if not value:
+        return []
+    out = []
+    for v in value.split(","):
+        v = v.strip()
+        out.append(int(v) if v.isdigit() else ord(v.upper()) - ord("A"))
+    return sorted(out)
 
 
 def run_method(name, clients, cfg, seed, faulty=None, verbose=True):
@@ -62,7 +77,7 @@ def run_method(name, clients, cfg, seed, faulty=None, verbose=True):
         return run_federated(clients, cfg, seed,
                              method="fedavg" if name == "fedavg" else "reliability_fedavg",
                              event_aware=name.endswith("_event"),
-                             faulty_client=faulty, verbose=verbose)
+                             faulty_clients=faulty, verbose=verbose)
     raise ValueError(f"Unknown method '{name}'")
 
 
@@ -75,12 +90,15 @@ def main():
                      ("client_fraction", args.client_fraction)):
         if val is not None:
             cfg["federated"][key] = val
-    faulty = parse_site(args.faulty_client)
+    if args.fault_start is not None:
+        cfg["faults"]["start_round"] = args.fault_start
     seed = args.seed if args.seed is not None else cfg["seed"]
+    faulty = parse_sites(args.faulty_client, args.clients, args.faulty_frac, seed)
     set_seed(seed)
-    methods = METHOD_GROUPS.get(args.methods, args.methods.split(","))
+    methods = [m for part in args.methods.split(",") for m in METHOD_GROUPS.get(part, [part])]
     tag = args.tag or (f"c{args.clients}_{cfg['split']['mode']}"
-                       + (f"_fault{faulty}-{args.fault_type}" if faulty is not None else "")
+                       + (f"_fault{len(faulty)}-{args.fault_type}-s{args.fault_severity:g}"
+                          if faulty else "")
                        + (f"_drop{cfg['federated']['dropout_rate']}"
                           if cfg["federated"]["dropout_rate"] else ""))
     out = Path(cfg["paths"]["outputs"])
@@ -89,7 +107,11 @@ def main():
 
     t0 = time.time()
     clients, split_info = prepare_clients(cfg, n_clients=args.clients, seed=seed,
-                                          faulty_client=faulty, fault_type=args.fault_type)
+                                          faulty_clients=faulty, fault_type=args.fault_type,
+                                          severity=args.fault_severity)
+    if faulty:
+        print(f"FAULTY sites ({args.fault_type}, severity {args.fault_severity:g}, from round "
+              f"{cfg['faults']['start_round']}): {[clients[i].params.name for i in faulty]}")
     print(f"Prepared {len(clients)} virtual sites in {time.time() - t0:.1f}s | "
           f"split={split_info['mode']} | test {split_info['test']}")
 
@@ -111,7 +133,7 @@ def main():
     table = pd.DataFrame([{k: v for k, v in s.items() if k != "per_site"} for s in summaries])
     print("\nTEST RESULTS — daytime targets, p.u. of installed capacity (lower is better)")
     cols = ["method", "global_mae", "global_rmse", "global_bias", "worst_site_rmse", "worst_site"]
-    if faulty is not None:
+    if faulty:
         cols += ["healthy_rmse"]
     if "total_comm_mb" in table:
         cols += ["rounds_to_converge", "participation_rate", "total_comm_mb"]

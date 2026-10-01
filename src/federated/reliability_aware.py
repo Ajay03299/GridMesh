@@ -18,9 +18,12 @@ class ReliabilityAwareFedAvg:
         self.rcfg = rcfg
         self.trust = {}
 
-    def weights(self, updates, state=None):
-        r_now = instant_reliability({u.name: u.e_global for u in updates},
-                                    self.rcfg["error_tolerance"], self.rcfg["error_sharpness"])
+    def weights(self, updates, peer_errors=None):
+        """`peer_errors`: errors from every client that reported this round (training clients
+        AND event-aware heartbeats), so the peer median is robust even when few clients train."""
+        errors = dict(peer_errors or {}) | {u.name: u.e_global for u in updates}
+        r_now = instant_reliability(errors, self.rcfg["error_tolerance"],
+                                    self.rcfg["error_sharpness"])
         self.trust = update_trust(self.trust, r_now, self.rcfg["trust_ema"])
         raw, quarantined = {}, []
         for u in updates:

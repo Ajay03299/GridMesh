@@ -17,9 +17,10 @@ import pandas as pd
 STEP_HOURS = 10 / 60
 
 
-def load_node(pred_csv):
-    """Aggregate a long-format prediction file (from run_simulation.py) into one node series."""
-    df = pd.read_csv(pred_csv, parse_dates=["time"])
+def load_node(pred):
+    """Aggregate long-format predictions (CSV path or DataFrame) into one node series."""
+    df = pred.copy() if isinstance(pred, pd.DataFrame) else pd.read_csv(pred, parse_dates=["time"])
+    df["time"] = pd.to_datetime(df["time"])
     df["forecast_mw"] = df["capacity_mw"] * df["forecast_pu"]
     df["actual_mw"] = df["capacity_mw"] * df["actual_pu"]
     node = (df.groupby("time")
@@ -72,3 +73,20 @@ def simulate(node, reserve_mw, rcfg, policy_name, delta=None):
         "total_cost": cost_res + cost_ens,
     }
     return d, summary
+
+
+def run_policies(node, cfg, seed):
+    """Fixed reserve + n-sigma at every delta in the sweep. Returns [(timeseries, summary)]."""
+    from src.reserve.reserve_policy import fixed_reserve, nsigma_reserve
+    rcfg, h = cfg["reserve"], cfg["features"]["horizon"]
+    node = node.copy()
+    node["demand_mw"] = synthetic_demand(node["time"], node["capacity_mw"].iloc[0],
+                                         rcfg["demand"], seed)
+    runs = [simulate(node, fixed_reserve(node["forecast_mw"], rcfg["fixed_fraction"]), rcfg,
+                     f"fixed_{int(round(rcfg['fixed_fraction'] * 100))}pct")]
+    for dlt in rcfg["delta_sweep"]:
+        r, mu, sd = nsigma_reserve(node, dlt, rcfg["window"], rcfg["min_periods"], h)
+        d, s = simulate(node, r, rcfg, f"nsigma_d{dlt}", delta=dlt)
+        d["mu_e"], d["sigma_e"] = mu, sd
+        runs.append((d, s))
+    return runs

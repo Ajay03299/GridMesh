@@ -1,0 +1,952 @@
+{
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "n_clients": 4,
+  "provenance": {
+    "weather": "REAL (NSRDB-format 10-min file, year assumed 2019)",
+    "pv_power": "MODELED from real GHI + temperature (simplified PVWatts)",
+    "sites": "SIMULATED heterogeneity from one real weather record",
+    "faults": "SIMULATED sensor/meter degradation",
+    "demand": "SYNTHETIC",
+    "costs": "SIMULATION ASSUMPTIONS",
+    "privacy": "raw data stays local; no secure aggregation / DP implemented"
+  },
+  "forecasting": {
+    "persistence": {
+      "global_rmse_mean": 0.0910344631894033,
+      "global_rmse_std": 0.0018641825097351003,
+      "global_mae_mean": 0.06746035174065992,
+      "global_mae_std": 0.0013459891653667224,
+      "worst_site_rmse_mean": 0.09477557031263256,
+      "worst_site_rmse_std": 0.0014115049555434294,
+      "rounds_to_converge_mean": NaN,
+      "rounds_to_converge_std": NaN,
+      "total_comm_mb_mean": NaN,
+      "total_comm_mb_std": NaN,
+      "participation_rate_mean": NaN,
+      "participation_rate_std": NaN,
+      "damage_pct_mean": NaN,
+      "damage_pct_std": NaN,
+      "degradation_pct_mean": NaN,
+      "degradation_pct_std": NaN
+    },
+    "smart_persistence": {
+      "global_rmse_mean": 0.07369458131664322,
+      "global_rmse_std": 0.0013121253483433404,
+      "global_mae_mean": 0.03629802167018347,
+      "global_mae_std": 0.0006126131677320677,
+      "worst_site_rmse_mean": 0.07673450936787202,
+      "worst_site_rmse_std": 0.0011576718296478282,
+      "rounds_to_converge_mean": NaN,
+      "rounds_to_converge_std": NaN,
+      "total_comm_mb_mean": NaN,
+      "total_comm_mb_std": NaN,
+      "participation_rate_mean": NaN,
+      "participation_rate_std": NaN,
+      "damage_pct_mean": NaN,
+      "damage_pct_std": NaN,
+      "degradation_pct_mean": NaN,
+      "degradation_pct_std": NaN
+    },
+    "local_only": {
+      "global_rmse_mean": 0.06695027347330512,
+      "global_rmse_std": 0.0017263635151930873,
+      "global_mae_mean": 0.03817318927405073,
+      "global_mae_std": 0.0024009583937908588,
+      "worst_site_rmse_mean": 0.07261072656269583,
+      "worst_site_rmse_std": 0.004704679023841914,
+      "rounds_to_converge_mean": NaN,
+      "rounds_to_converge_std": NaN,
+      "total_comm_mb_mean": NaN,
+      "total_comm_mb_std": NaN,
+      "participation_rate_mean": NaN,
+      "participation_rate_std": NaN,
+      "damage_pct_mean": NaN,
+      "damage_pct_std": NaN,
+      "degradation_pct_mean": NaN,
+      "degradation_pct_std": NaN
+    },
+    "centralized": {
+      "global_rmse_mean": 0.06464027297127764,
+      "global_rmse_std": 0.0006468545976966057,
+      "global_mae_mean": 0.03687632896980945,
+      "global_mae_std": 0.0016210534053254294,
+      "worst_site_rmse_mean": 0.06729781347383329,
+      "worst_site_rmse_std": 0.0014906261909435818,
+      "rounds_to_converge_mean": NaN,
+      "rounds_to_converge_std": NaN,
+      "total_comm_mb_mean": NaN,
+      "total_comm_mb_std": NaN,
+      "participation_rate_mean": NaN,
+      "participation_rate_std": NaN,
+      "damage_pct_mean": NaN,
+      "damage_pct_std": NaN,
+      "degradation_pct_mean": NaN,
+      "degradation_pct_std": NaN
+    },
+    "fedavg": {
+      "global_rmse_mean": 0.06427273531646205,
+      "global_rmse_std": 0.0011951208502611773,
+      "global_mae_mean": 0.03577281026666378,
+      "global_mae_std": 0.0006211641177521718,
+      "worst_site_rmse_mean": 0.0669042504769753,
+      "worst_site_rmse_std": 0.001598724560716978,
+      "rounds_to_converge_mean": 2.0,
+      "rounds_to_converge_std": 0.0,
+      "total_comm_mb_mean": 5.08224,
+      "total_comm_mb_std": 0.0,
+      "participation_rate_mean": 1.0,
+      "participation_rate_std": 0.0,
+      "damage_pct_mean": 2.55330598382449,
+      "damage_pct_std": 3.597109580162738,
+      "degradation_pct_mean": 0.40689116564010713,
+      "degradation_pct_std": 0.9395768937121107
+    },
+    "reliability_fedavg": {
+      "global_rmse_mean": 0.0640630979982769,
+      "global_rmse_std": 0.0011202074571710853,
+      "global_mae_mean": 0.03640038593857164,
+      "global_mae_std": 0.0007576234531632576,
+      "worst_site_rmse_mean": 0.06694821684518269,
+      "worst_site_rmse_std": 0.00168490495269205,
+      "rounds_to_converge_mean": 2.3333333333333335,
+      "rounds_to_converge_std": 0.5773502691896258,
+      "total_comm_mb_mean": 5.08224,
+      "total_comm_mb_std": 0.0,
+      "participation_rate_mean": 1.0,
+      "participation_rate_std": 0.0,
+      "damage_pct_mean": 0.35117132607923224,
+      "damage_pct_std": 0.7501823666320815,
+      "degradation_pct_mean": 0.37604668642693034,
+      "degradation_pct_std": 0.4068931122157686
+    },
+    "reliability_fedavg_event": {
+      "global_rmse_mean": 0.06481862714206431,
+      "global_rmse_std": 0.0011241473864794177,
+      "global_mae_mean": 0.036171026442273935,
+      "global_mae_std": 0.0009701236069590954,
+      "worst_site_rmse_mean": 0.06776166072795385,
+      "worst_site_rmse_std": 0.0019369810158736186,
+      "rounds_to_converge_mean": 2.6666666666666665,
+      "rounds_to_converge_std": 0.5773502691896258,
+      "total_comm_mb_mean": 2.7958079999999996,
+      "total_comm_mb_std": 0.38107199999999997,
+      "participation_rate_mean": 0.5499999999999999,
+      "participation_rate_std": 0.07500000000000007,
+      "damage_pct_mean": 0.048239937346449144,
+      "damage_pct_std": 1.2639970931629205,
+      "degradation_pct_mean": 0.16873348048368486,
+      "degradation_pct_std": 1.235599547422945
+    }
+  },
+  "fault_scenarios": [
+    {
+      "scenario": "fault_target_noise_D",
+      "method": "fedavg",
+      "clean_healthy_rmse_mean": 0.06406672127569664,
+      "clean_healthy_rmse_std": 0.0012265667454368224,
+      "healthy_rmse_mean": 0.06534030546837999,
+      "healthy_rmse_std": 0.0011125810467058842,
+      "damage_pct_mean": 1.9906632199102086,
+      "damage_pct_std": 0.2168440719215095
+    },
+    {
+      "scenario": "fault_target_noise_D",
+      "method": "reliability_fedavg",
+      "clean_healthy_rmse_mean": 0.06391912857038523,
+      "clean_healthy_rmse_std": 0.0010958468575494626,
+      "healthy_rmse_mean": 0.06411509493718703,
+      "healthy_rmse_std": 0.0011953073837240634,
+      "damage_pct_mean": 0.3051737406388644,
+      "damage_pct_std": 0.3259839860576212
+    },
+    {
+      "scenario": "fault_target_noise_D",
+      "method": "reliability_fedavg_event",
+      "clean_healthy_rmse_mean": 0.0646873098950352,
+      "clean_healthy_rmse_std": 0.0011344235154926588,
+      "healthy_rmse_mean": 0.0643822045815768,
+      "healthy_rmse_std": 0.0009725276694867178,
+      "damage_pct_mean": -0.4687919587663643,
+      "damage_pct_std": 0.2811700430689627
+    },
+    {
+      "scenario": "fault_stale_D",
+      "method": "fedavg",
+      "clean_healthy_rmse_mean": 0.06406672127569664,
+      "clean_healthy_rmse_std": 0.0012265667454368224,
+      "healthy_rmse_mean": 0.0662050033850105,
+      "healthy_rmse_std": 0.0032003297589335592,
+      "damage_pct_mean": 3.2993654737544897,
+      "damage_pct_std": 3.0212199956764203
+    },
+    {
+      "scenario": "fault_stale_D",
+      "method": "reliability_fedavg",
+      "clean_healthy_rmse_mean": 0.06391912857038523,
+      "clean_healthy_rmse_std": 0.0010958468575494626,
+      "healthy_rmse_mean": 0.06405462998154604,
+      "healthy_rmse_std": 0.001111622683943419,
+      "damage_pct_mean": 0.2117609757802915,
+      "damage_pct_std": 0.05506841801591167
+    },
+    {
+      "scenario": "fault_stale_D",
+      "method": "reliability_fedavg_event",
+      "clean_healthy_rmse_mean": 0.0646873098950352,
+      "clean_healthy_rmse_std": 0.0011344235154926588,
+      "healthy_rmse_mean": 0.0643331553486494,
+      "healthy_rmse_std": 0.0013705083246845797,
+      "damage_pct_mean": -0.5517575299550067,
+      "damage_pct_std": 0.40251627972249715
+    },
+    {
+      "scenario": "fault_bias_D",
+      "method": "fedavg",
+      "clean_healthy_rmse_mean": 0.06406672127569664,
+      "clean_healthy_rmse_std": 0.0012265667454368224,
+      "healthy_rmse_mean": 0.06384121544285457,
+      "healthy_rmse_std": 0.0010106652636919001,
+      "damage_pct_mean": -0.3468864719784988,
+      "damage_pct_std": 0.6201396379545283
+    },
+    {
+      "scenario": "fault_bias_D",
+      "method": "reliability_fedavg",
+      "clean_healthy_rmse_mean": 0.06391912857038523,
+      "clean_healthy_rmse_std": 0.0010958468575494626,
+      "healthy_rmse_mean": 0.06387300442031053,
+      "healthy_rmse_std": 0.001002881727360082,
+      "damage_pct_mean": -0.07049612907021514,
+      "damage_pct_std": 0.156932347403997
+    },
+    {
+      "scenario": "fault_bias_D",
+      "method": "reliability_fedavg_event",
+      "clean_healthy_rmse_mean": 0.0646873098950352,
+      "clean_healthy_rmse_std": 0.0011344235154926588,
+      "healthy_rmse_mean": 0.06514084097463947,
+      "healthy_rmse_std": 0.0014510207732843599,
+      "damage_pct_mean": 0.6962213833163644,
+      "damage_pct_std": 0.642989374797282
+    },
+    {
+      "scenario": "fault_feature_corruption_D",
+      "method": "fedavg",
+      "clean_healthy_rmse_mean": 0.06406672127569664,
+      "clean_healthy_rmse_std": 0.0012265667454368224,
+      "healthy_rmse_mean": 0.06385607033014888,
+      "healthy_rmse_std": 0.0008656486975231483,
+      "damage_pct_mean": -0.3216872719458623,
+      "damage_pct_std": 0.5572381813849594
+    },
+    {
+      "scenario": "fault_feature_corruption_D",
+      "method": "reliability_fedavg",
+      "clean_healthy_rmse_mean": 0.06391912857038523,
+      "clean_healthy_rmse_std": 0.0010958468575494626,
+      "healthy_rmse_mean": 0.06415530242911023,
+      "healthy_rmse_std": 0.000692568201429096,
+      "damage_pct_mean": 0.3805571934656508,
+      "damage_pct_std": 1.239081605881775
+    },
+    {
+      "scenario": "fault_feature_corruption_D",
+      "method": "reliability_fedavg_event",
+      "clean_healthy_rmse_mean": 0.0646873098950352,
+      "clean_healthy_rmse_std": 0.0011344235154926588,
+      "healthy_rmse_mean": 0.06425399909273859,
+      "healthy_rmse_std": 0.0012032722271908792,
+      "damage_pct_mean": -0.6690972535132178,
+      "damage_pct_std": 0.8219405740478147
+    },
+    {
+      "scenario": "fault_target_noise_CD",
+      "method": "fedavg",
+      "clean_healthy_rmse_mean": 0.0625936078134961,
+      "clean_healthy_rmse_std": 0.001459734589582173,
+      "healthy_rmse_mean": 0.0635042297862115,
+      "healthy_rmse_std": 0.0015547463904633664,
+      "damage_pct_mean": 1.4553904309769254,
+      "damage_pct_std": 0.8448804773033054
+    },
+    {
+      "scenario": "fault_target_noise_CD",
+      "method": "reliability_fedavg",
+      "clean_healthy_rmse_mean": 0.062341589650341735,
+      "clean_healthy_rmse_std": 0.001359083363019338,
+      "healthy_rmse_mean": 0.06280171783140144,
+      "healthy_rmse_std": 0.0018413582311921804,
+      "damage_pct_mean": 0.7317175943905722,
+      "damage_pct_std": 1.4240051498994457
+    },
+    {
+      "scenario": "fault_target_noise_CD",
+      "method": "reliability_fedavg_event",
+      "clean_healthy_rmse_mean": 0.06308005922433055,
+      "clean_healthy_rmse_std": 0.0016400486402011057,
+      "healthy_rmse_mean": 0.06413672763268125,
+      "healthy_rmse_std": 0.0023014948785793675,
+      "damage_pct_mean": 1.6679588382388737,
+      "damage_pct_std": 1.983158171856737
+    },
+    {
+      "scenario": "fault_stale_CD",
+      "method": "fedavg",
+      "clean_healthy_rmse_mean": 0.0625936078134961,
+      "clean_healthy_rmse_std": 0.001459734589582173,
+      "healthy_rmse_mean": 0.06839773604583753,
+      "healthy_rmse_std": 0.002808686422595619,
+      "damage_pct_mean": 9.242990522229677,
+      "damage_pct_std": 2.0343837472134774
+    },
+    {
+      "scenario": "fault_stale_CD",
+      "method": "reliability_fedavg",
+      "clean_healthy_rmse_mean": 0.062341589650341735,
+      "clean_healthy_rmse_std": 0.001359083363019338,
+      "healthy_rmse_mean": 0.06267870160840476,
+      "healthy_rmse_std": 0.0010883862721328672,
+      "damage_pct_mean": 0.5483145812702298,
+      "damage_pct_std": 0.714623909015936
+    },
+    {
+      "scenario": "fault_stale_CD",
+      "method": "reliability_fedavg_event",
+      "clean_healthy_rmse_mean": 0.06308005922433055,
+      "clean_healthy_rmse_std": 0.0016400486402011057,
+      "healthy_rmse_mean": 0.06282274001213085,
+      "healthy_rmse_std": 0.0008162289510944198,
+      "damage_pct_mean": -0.38509385524195433,
+      "damage_pct_std": 1.3258133570558035
+    }
+  ],
+  "severity_sweep": [
+    {
+      "severity": 0.0,
+      "method": "fedavg",
+      "healthy_rmse_mean": 0.06427273531646205,
+      "healthy_rmse_std": 0.0011951208502611773
+    },
+    {
+      "severity": 0.0,
+      "method": "reliability_fedavg",
+      "healthy_rmse_mean": 0.0640630979982769,
+      "healthy_rmse_std": 0.0011202074571710853
+    },
+    {
+      "severity": 0.5,
+      "method": "fedavg",
+      "healthy_rmse_mean": 0.06457274675307474,
+      "healthy_rmse_std": 0.0016531615549617677
+    },
+    {
+      "severity": 0.5,
+      "method": "reliability_fedavg",
+      "healthy_rmse_mean": 0.06391649245289431,
+      "healthy_rmse_std": 0.0008811997634489388
+    },
+    {
+      "severity": 1.0,
+      "method": "fedavg",
+      "healthy_rmse_mean": 0.0662050033850105,
+      "healthy_rmse_std": 0.002862461956556376
+    },
+    {
+      "severity": 1.0,
+      "method": "reliability_fedavg",
+      "healthy_rmse_mean": 0.06405462998154604,
+      "healthy_rmse_std": 0.0009942655546513013
+    },
+    {
+      "severity": 2.0,
+      "method": "fedavg",
+      "healthy_rmse_mean": 0.06698287852316985,
+      "healthy_rmse_std": 0.003929972898117996
+    },
+    {
+      "severity": 2.0,
+      "method": "reliability_fedavg",
+      "healthy_rmse_mean": 0.06420245461271377,
+      "healthy_rmse_std": 0.0007761503822841563
+    },
+    {
+      "severity": 4.0,
+      "method": "fedavg",
+      "healthy_rmse_mean": 0.06610789008593544,
+      "healthy_rmse_std": 0.0038528526419994314
+    },
+    {
+      "severity": 4.0,
+      "method": "reliability_fedavg",
+      "healthy_rmse_mean": 0.06413115675281578,
+      "healthy_rmse_std": 0.001135536333541795
+    }
+  ],
+  "dropout": [
+    {
+      "dropout": 0.0,
+      "method": "fedavg",
+      "global_rmse_mean": 0.06427273531646205,
+      "global_rmse_std": 0.0011951208502611773,
+      "total_comm_mb_mean": 5.08224,
+      "total_comm_mb_std": 0.0
+    },
+    {
+      "dropout": 0.0,
+      "method": "reliability_fedavg",
+      "global_rmse_mean": 0.0640630979982769,
+      "global_rmse_std": 0.0011202074571710853,
+      "total_comm_mb_mean": 5.08224,
+      "total_comm_mb_std": 0.0
+    },
+    {
+      "dropout": 0.0,
+      "method": "reliability_fedavg_event",
+      "global_rmse_mean": 0.06481862714206431,
+      "global_rmse_std": 0.0011241473864794177,
+      "total_comm_mb_mean": 2.7958079999999996,
+      "total_comm_mb_std": 0.38107199999999997
+    },
+    {
+      "dropout": 0.25,
+      "method": "fedavg",
+      "global_rmse_mean": 0.06430845426836586,
+      "global_rmse_std": 0.000884303769484312,
+      "total_comm_mb_mean": 3.832856,
+      "total_comm_mb_std": 0.1833895395053927
+    },
+    {
+      "dropout": 0.25,
+      "method": "reliability_fedavg",
+      "global_rmse_mean": 0.06415917431719285,
+      "global_rmse_std": 0.0009220438734382868,
+      "total_comm_mb_mean": 3.832856,
+      "total_comm_mb_std": 0.1833895395053927
+    },
+    {
+      "dropout": 0.25,
+      "method": "reliability_fedavg_event",
+      "global_rmse_mean": 0.06456493237664777,
+      "global_rmse_std": 0.001639974445699921,
+      "total_comm_mb_mean": 2.0335146666666666,
+      "total_comm_mb_std": 0.571640000074639
+    },
+    {
+      "dropout": 0.5,
+      "method": "fedavg",
+      "global_rmse_mean": 0.06474640517878874,
+      "global_rmse_std": 0.0004623766669045908,
+      "total_comm_mb_mean": 2.4140639999999998,
+      "total_comm_mb_std": 0.29112186874915486
+    },
+    {
+      "dropout": 0.5,
+      "method": "reliability_fedavg",
+      "global_rmse_mean": 0.06444511904931495,
+      "global_rmse_std": 0.0010349109284548412,
+      "total_comm_mb_mean": 2.4140639999999998,
+      "total_comm_mb_std": 0.29112186874915486
+    },
+    {
+      "dropout": 0.5,
+      "method": "reliability_fedavg_event",
+      "global_rmse_mean": 0.06530191442281234,
+      "global_rmse_std": 0.0017765081379850695,
+      "total_comm_mb_mean": 1.313536,
+      "total_comm_mb_std": 0.2863607194291842
+    }
+  ],
+  "reserve": [
+    {
+      "forecast": "smart_persistence",
+      "policy": "fixed_20pct",
+      "reserve_energy_mwh_mean": 1911.1421659742616,
+      "reserve_energy_mwh_std": 463.72830170832884,
+      "shortfall_energy_mwh_mean": 167.8639606980886,
+      "shortfall_energy_mwh_std": 41.33091586841956,
+      "reserve_pct_of_forecast_mean": 20.0,
+      "reserve_pct_of_forecast_std": 0.0,
+      "ens_pct_of_demand_mean": 0.7317399338926042,
+      "ens_pct_of_demand_std": 0.014141553355881725,
+      "availability_pct_mean": 90.7201646090535,
+      "availability_pct_std": 0.35100251253563886,
+      "total_cost_mean": 5268.421379936033,
+      "total_cost_std": 1290.3390709086498,
+      "cost_reserve_mean": 1911.1421659742616,
+      "cost_reserve_std": 463.72830170832884,
+      "cost_shortfall_mean": 3357.279213961772,
+      "cost_shortfall_std": 826.6183173683913
+    },
+    {
+      "forecast": "smart_persistence",
+      "policy": "nsigma_d0.02",
+      "reserve_energy_mwh_mean": 2939.448404955519,
+      "reserve_energy_mwh_std": 731.2886320293856,
+      "shortfall_energy_mwh_mean": 100.09983386232408,
+      "shortfall_energy_mwh_std": 23.499785581930162,
+      "reserve_pct_of_forecast_mean": 30.724939185767344,
+      "reserve_pct_of_forecast_std": 0.22760188644045978,
+      "ens_pct_of_demand_mean": 0.4373531855660869,
+      "ens_pct_of_demand_std": 0.014297822353750335,
+      "availability_pct_mean": 95.49382716049382,
+      "availability_pct_std": 0.0534583582583002,
+      "total_cost_mean": 4941.445082202,
+      "total_cost_std": 1201.1637704247105,
+      "cost_reserve_mean": 2939.448404955519,
+      "cost_reserve_std": 731.2886320293856,
+      "cost_shortfall_mean": 2001.9966772464813,
+      "cost_shortfall_std": 469.9957116386033
+    },
+    {
+      "forecast": "smart_persistence",
+      "policy": "nsigma_d0.05",
+      "reserve_energy_mwh_mean": 2357.062303144379,
+      "reserve_energy_mwh_std": 586.410612451418,
+      "shortfall_energy_mwh_mean": 126.62752090018888,
+      "shortfall_energy_mwh_std": 30.37561545199024,
+      "reserve_pct_of_forecast_mean": 24.637458335607324,
+      "reserve_pct_of_forecast_std": 0.18262016375854692,
+      "ens_pct_of_demand_mean": 0.5526717800719337,
+      "ens_pct_of_demand_std": 0.015395707227531641,
+      "availability_pct_mean": 93.8888888888889,
+      "availability_pct_std": 0.2976435420059526,
+      "total_cost_mean": 4889.612721148156,
+      "total_cost_std": 1193.7780030291497,
+      "cost_reserve_mean": 2357.062303144379,
+      "cost_reserve_std": 586.410612451418,
+      "cost_shortfall_mean": 2532.550418003778,
+      "cost_shortfall_std": 607.5123090398051
+    },
+    {
+      "forecast": "smart_persistence",
+      "policy": "nsigma_d0.1",
+      "reserve_energy_mwh_mean": 1839.6166836989185,
+      "reserve_energy_mwh_std": 457.68289805431925,
+      "shortfall_energy_mwh_mean": 160.3469323031318,
+      "shortfall_energy_mwh_std": 38.91685834564641,
+      "reserve_pct_of_forecast_mean": 19.228787443449505,
+      "reserve_pct_of_forecast_std": 0.14259361861211434,
+      "ens_pct_of_demand_mean": 0.6994501648176082,
+      "ens_pct_of_demand_std": 0.016853808339493175,
+      "availability_pct_mean": 91.55349794238684,
+      "availability_pct_std": 0.2624969304973784,
+      "total_cost_mean": 5046.555329761554,
+      "total_cost_std": 1235.964413934892,
+      "cost_reserve_mean": 1839.6166836989185,
+      "cost_reserve_std": 457.68289805431925,
+      "cost_shortfall_mean": 3206.938646062636,
+      "cost_shortfall_std": 778.3371669129281
+    },
+    {
+      "forecast": "fedavg",
+      "policy": "fixed_20pct",
+      "reserve_energy_mwh_mean": 1911.0930131388875,
+      "reserve_energy_mwh_std": 459.0437960425064,
+      "shortfall_energy_mwh_mean": 182.6650368007635,
+      "shortfall_energy_mwh_std": 40.28473551335563,
+      "reserve_pct_of_forecast_mean": 20.0,
+      "reserve_pct_of_forecast_std": 3.552713678800501e-15,
+      "ens_pct_of_demand_mean": 0.8004107131484245,
+      "ens_pct_of_demand_std": 0.03958123930208182,
+      "availability_pct_mean": 87.36625514403293,
+      "availability_pct_std": 0.5249938609947722,
+      "total_cost_mean": 5564.393749154157,
+      "total_cost_std": 1264.089307760969,
+      "cost_reserve_mean": 1911.0930131388875,
+      "cost_reserve_std": 459.0437960425064,
+      "cost_shortfall_mean": 3653.3007360152696,
+      "cost_shortfall_std": 805.6947102671122
+    },
+    {
+      "forecast": "fedavg",
+      "policy": "nsigma_d0.02",
+      "reserve_energy_mwh_mean": 2519.925126092039,
+      "reserve_energy_mwh_std": 595.3889172366247,
+      "shortfall_energy_mwh_mean": 107.25337070282603,
+      "shortfall_energy_mwh_std": 23.706408885696217,
+      "reserve_pct_of_forecast_mean": 26.39133068241426,
+      "reserve_pct_of_forecast_std": 0.1271931647946085,
+      "ens_pct_of_demand_mean": 0.469932042760898,
+      "ens_pct_of_demand_std": 0.024361975376600297,
+      "availability_pct_mean": 94.07407407407408,
+      "availability_pct_std": 0.14143752144925137,
+      "total_cost_mean": 4664.99254014856,
+      "total_cost_std": 1068.0279777925944,
+      "cost_reserve_mean": 2519.925126092039,
+      "cost_reserve_std": 595.3889172366247,
+      "cost_shortfall_mean": 2145.0674140565206,
+      "cost_shortfall_std": 474.12817771392423
+    },
+    {
+      "forecast": "fedavg",
+      "policy": "nsigma_d0.05",
+      "reserve_energy_mwh_mean": 2022.8572905362353,
+      "reserve_energy_mwh_std": 472.7913294743591,
+      "shortfall_energy_mwh_mean": 135.12248618493075,
+      "shortfall_energy_mwh_std": 30.297346292402477,
+      "reserve_pct_of_forecast_mean": 21.195715609685873,
+      "reserve_pct_of_forecast_std": 0.16665912468662894,
+      "ens_pct_of_demand_mean": 0.5916411936537743,
+      "ens_pct_of_demand_std": 0.02790977234183518,
+      "availability_pct_mean": 91.88271604938272,
+      "availability_pct_std": 0.1112824467735862,
+      "total_cost_mean": 4725.307014234851,
+      "total_cost_std": 1077.6751693929539,
+      "cost_reserve_mean": 2022.8572905362353,
+      "cost_reserve_std": 472.7913294743591,
+      "cost_shortfall_mean": 2702.4497236986153,
+      "cost_shortfall_std": 605.9469258480495
+    },
+    {
+      "forecast": "fedavg",
+      "policy": "nsigma_d0.1",
+      "reserve_energy_mwh_mean": 1581.7541596408767,
+      "reserve_energy_mwh_std": 364.02613138128925,
+      "shortfall_energy_mwh_mean": 169.13215797548293,
+      "shortfall_energy_mwh_std": 39.19783226627014,
+      "reserve_pct_of_forecast_mean": 16.58503337438998,
+      "reserve_pct_of_forecast_std": 0.20166327532457026,
+      "ens_pct_of_demand_mean": 0.7394024024469176,
+      "ens_pct_of_demand_std": 0.028783218223913408,
+      "availability_pct_mean": 88.94032921810701,
+      "availability_pct_std": 0.3859053360804783,
+      "total_cost_mean": 4964.397319150535,
+      "total_cost_std": 1147.2149499014097,
+      "cost_reserve_mean": 1581.7541596408767,
+      "cost_reserve_std": 364.02613138128925,
+      "cost_shortfall_mean": 3382.6431595096583,
+      "cost_shortfall_std": 783.9566453254026
+    },
+    {
+      "forecast": "reliability_fedavg",
+      "policy": "fixed_20pct",
+      "reserve_energy_mwh_mean": 1898.840972762969,
+      "reserve_energy_mwh_std": 476.7912390182641,
+      "shortfall_energy_mwh_mean": 176.47847138549332,
+      "shortfall_energy_mwh_std": 50.97015147351214,
+      "reserve_pct_of_forecast_mean": 20.0,
+      "reserve_pct_of_forecast_std": 0.0,
+      "ens_pct_of_demand_mean": 0.7625503581523695,
+      "ens_pct_of_demand_std": 0.045517247198596046,
+      "availability_pct_mean": 87.60288065843622,
+      "availability_pct_std": 0.6799469811464326,
+      "total_cost_mean": 5428.410400472835,
+      "total_cost_std": 1493.51423262514,
+      "cost_reserve_mean": 1898.840972762969,
+      "cost_reserve_std": 476.7912390182641,
+      "cost_shortfall_mean": 3529.5694277098664,
+      "cost_shortfall_std": 1019.4030294702428
+    },
+    {
+      "forecast": "reliability_fedavg",
+      "policy": "nsigma_d0.02",
+      "reserve_energy_mwh_mean": 2447.48943365032,
+      "reserve_energy_mwh_std": 688.9090131794763,
+      "shortfall_energy_mwh_mean": 106.0263330010883,
+      "shortfall_energy_mwh_std": 26.90290596092077,
+      "reserve_pct_of_forecast_mean": 25.620118308026672,
+      "reserve_pct_of_forecast_std": 0.9900269761537259,
+      "ens_pct_of_demand_mean": 0.4614396727380461,
+      "ens_pct_of_demand_std": 0.015688992035505448,
+      "availability_pct_mean": 93.90946502057614,
+      "availability_pct_std": 0.3091559506443691,
+      "total_cost_mean": 4568.016093672087,
+      "total_cost_std": 1226.2109690360908,
+      "cost_reserve_mean": 2447.48943365032,
+      "cost_reserve_std": 688.9090131794763,
+      "cost_shortfall_mean": 2120.526660021766,
+      "cost_shortfall_std": 538.0581192184154
+    },
+    {
+      "forecast": "reliability_fedavg",
+      "policy": "nsigma_d0.05",
+      "reserve_energy_mwh_mean": 1953.4355623672843,
+      "reserve_energy_mwh_std": 563.5975872494416,
+      "shortfall_energy_mwh_mean": 133.04039978700868,
+      "shortfall_energy_mwh_std": 34.41915561399982,
+      "reserve_pct_of_forecast_mean": 20.419260343361106,
+      "reserve_pct_of_forecast_std": 0.970438696255613,
+      "ens_pct_of_demand_mean": 0.5784149574869849,
+      "ens_pct_of_demand_std": 0.020167476036383893,
+      "availability_pct_mean": 91.90329218106996,
+      "availability_pct_std": 0.5322023521143057,
+      "total_cost_mean": 4614.243558107458,
+      "total_cost_std": 1251.274066084311,
+      "cost_reserve_mean": 1953.4355623672843,
+      "cost_reserve_std": 563.5975872494416,
+      "cost_shortfall_mean": 2660.8079957401737,
+      "cost_shortfall_std": 688.3831122799965
+    },
+    {
+      "forecast": "reliability_fedavg",
+      "policy": "nsigma_d0.1",
+      "reserve_energy_mwh_mean": 1515.8500820918764,
+      "reserve_energy_mwh_std": 451.56916753414083,
+      "shortfall_energy_mwh_mean": 166.15999821658906,
+      "shortfall_energy_mwh_std": 44.2102862307829,
+      "reserve_pct_of_forecast_mean": 15.815059203133847,
+      "reserve_pct_of_forecast_std": 0.9398686586535401,
+      "ens_pct_of_demand_mean": 0.7213012129797822,
+      "ens_pct_of_demand_std": 0.026276878626961153,
+      "availability_pct_mean": 89.32098765432097,
+      "availability_pct_std": 0.9627453062026106,
+      "total_cost_mean": 4839.0500464236575,
+      "total_cost_std": 1335.2941309441321,
+      "cost_reserve_mean": 1515.8500820918764,
+      "cost_reserve_std": 451.56916753414083,
+      "cost_shortfall_mean": 3323.1999643317813,
+      "cost_shortfall_std": 884.205724615658
+    }
+  ],
+  "config": {
+    "seed": 42,
+    "data": {
+      "path": "data/raw/wind.csv",
+      "timestamp_col": "auto",
+      "assumed_year": 2019,
+      "target_col": "WindSpeed_Class",
+      "power_col": null,
+      "site_col": null,
+      "task": "auto"
+    },
+    "target": {
+      "mode": "pv_from_irradiance",
+      "column": null
+    },
+    "pv_model": {
+      "noct": 45.0,
+      "ref_irradiance": 1000.0,
+      "inverter_clip": 1.0
+    },
+    "split": {
+      "mode": "blocked_monthly",
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "features": {
+      "lookback": 6,
+      "horizon": 3,
+      "lagged": [
+        "pv",
+        "GHI",
+        "DNI",
+        "DHI",
+        "kt",
+        "Temperature"
+      ],
+      "current": [
+        "Relative Humidity",
+        "Pressure",
+        "Precipitable Water",
+        "Aerosol Optical Depth",
+        "Dew Point"
+      ],
+      "cloud_type_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "future_known": [
+        "Clearsky GHI",
+        "cos_zenith",
+        "hour_sin",
+        "hour_cos",
+        "doy_sin",
+        "doy_cos"
+      ],
+      "daytime_zenith_max": 85.0
+    },
+    "virtual_sites": {
+      "capacity_mw": [
+        5.0,
+        20.0
+      ],
+      "derate": [
+        0.8,
+        0.9
+      ],
+      "temp_coeff": [
+        -0.0045,
+        -0.0035
+      ],
+      "sensor_noise_std": [
+        0.0,
+        0.05
+      ],
+      "sensor_bias": [
+        -0.03,
+        0.03
+      ],
+      "missing_rate": [
+        0.0,
+        0.03
+      ],
+      "target_noise_std": [
+        0.0,
+        0.01
+      ],
+      "history_fraction": [
+        0.2,
+        1.0
+      ]
+    },
+    "model": {
+      "target": "residual_smart_persistence",
+      "hidden": [
+        64,
+        64
+      ],
+      "lr": 0.001,
+      "batch_size": 256,
+      "epochs": 15,
+      "weight_decay": 0.0
+    },
+    "paths": {
+      "outputs": "outputs"
+    },
+    "federated": {
+      "rounds": 20,
+      "local_epochs": 1,
+      "client_fraction": 1.0,
+      "min_clients": 2,
+      "dropout_rate": 0.0,
+      "select_best": true
+    },
+    "reliability": {
+      "error_tolerance": 0.25,
+      "error_sharpness": 2.0,
+      "trust_ema": 0.5,
+      "quarantine_below": 0.2,
+      "use_data_quality": true
+    },
+    "event_aware": {
+      "drift_k": 2.0,
+      "window": 5,
+      "min_history": 3,
+      "stable_participation": 0.5,
+      "heartbeat_bytes": 16
+    },
+    "faults": {
+      "start_round": 1,
+      "feature_corruption": {
+        "irradiance_scale": 0.6,
+        "noise_std": 0.25
+      },
+      "target_noise": {
+        "std": 0.1
+      },
+      "stale": {
+        "hold_steps": 12
+      },
+      "bias": {
+        "scale": 1.25
+      }
+    },
+    "reserve": {
+      "forecast_method": "reliability_fedavg",
+      "fixed_fraction": 0.2,
+      "delta": 0.05,
+      "delta_sweep": [
+        0.02,
+        0.05,
+        0.1
+      ],
+      "window": 36,
+      "min_periods": 12,
+      "cost_reserve_per_mwh": 1.0,
+      "cost_shortfall_per_mwh": 20.0,
+      "demand": {
+        "base_mw_per_mw_capacity": 0.8,
+        "morning_peak": 0.25,
+        "evening_peak": 0.45,
+        "noise_std": 0.02
+      }
+    },
+    "experiments": {
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "fault_scenarios": [
+        {
+          "type": "target_noise",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "bias",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "feature_corruption",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "target_noise",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        }
+      ],
+      "severity_sweep": {
+        "type": "stale",
+        "sites": [
+          "D"
+        ],
+        "severities": [
+          0.5,
+          1,
+          2,
+          4
+        ]
+      },
+      "dropout_rates": [
+        0.25,
+        0.5
+      ]
+    },
+    "plots": {
+      "example_month": 7,
+      "fault_scenario": "fault_stale_CD"
+    }
+  },
+  "runtime_s": 236.2
+}

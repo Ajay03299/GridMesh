@@ -6,6 +6,11 @@ Per round:
   3. skipping clients send a tiny heartbeat (error of their last received model) if event-aware
   4. server aggregates (FedAvg or reliability-aware) -> new global model
   5. log weights, trust, drift, participation, bytes, per-site validation error
+
+Model selection (same idea as early stopping in the baselines): the clients' reported
+validation errors of the model they RECEIVED are averaged with the same weights the method
+uses for aggregation; the server keeps the global model with the lowest such score.
+No test data and no oracle knowledge of which site is faulty is used.
 """
 import numpy as np
 import pandas as pd
@@ -22,12 +27,12 @@ METADATA_BYTES = 32   # n_samples, e_global, e_local, quality sent with each upd
 
 
 def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
-                  faulty_client=None, verbose=True):
+                  faulty_clients=(), verbose=True):
     fcfg, ecfg = cfg["federated"], cfg["event_aware"]
     rng = np.random.default_rng([seed, 7])
     clients = {c.params.name: FLClient(c, cfg, seed) for c in clients_data}
     names = list(clients)
-    faulty_name = clients_data[faulty_client].params.name if faulty_client is not None else None
+    faulty_names = {clients_data[i].params.name for i in (faulty_clients or ())}
 
     global_model = build_model(clients_data[0].train.X.shape[1], cfg["model"], seed)
     gp = get_params(global_model)
@@ -36,10 +41,12 @@ def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
     agg = FedAvg() if method == "fedavg" else ReliabilityAwareFedAvg(cfg["reliability"])
     detector = DriftDetector(ecfg["drift_k"], ecfg["window"], ecfg["min_history"])
     drifting, rows, rounds = set(), [], []
+    best_score, best_params, best_round = np.inf, gp, 0
 
     for r in range(1, fcfg["rounds"] + 1):
-        if faulty_name and r >= cfg["faults"]["start_round"]:
-            clients[faulty_name].faulty_active = True
+        if r >= cfg["faults"]["start_round"]:
+            for fn in faulty_names:
+                clients[fn].faulty_active = True
 
         active, skipped, dropped = select_clients(names, rng, fcfg, ecfg if event_aware else None,
                                                   drifting, r)
@@ -58,9 +65,19 @@ def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
 
         aggregated = len(updates) >= fcfg["min_clients"]
         weights, info = ({}, {})
+        received = gp                       # the model the clients just evaluated
         if aggregated:
-            weights, info = agg.weights(updates)
+            weights, info = agg.weights(updates, peer_errors=errors)
             gp = weighted_average([u.params for u in updates], [weights[u.name] for u in updates])
+        # validation score of the RECEIVED model, weighted like this method's aggregation
+        score = np.nan
+        if updates:
+            sw = weights if aggregated else {u.name: u.n_samples for u in updates}
+            tot = sum(sw[u.name] for u in updates)
+            if tot > 0:
+                score = sum(sw[u.name] * u.e_global for u in updates) / tot
+                if fcfg.get("select_best", True) and score < best_score:
+                    best_score, best_params, best_round = score, received, r - 1
         set_params(global_model, gp)
 
         # server-side bookkeeping for plots: global model on every site's CLEAN validation data
@@ -81,9 +98,10 @@ def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
                 "faulty_active": clients[n].faulty_active,
                 "val_mse_clean": val[n],
             })
-        healthy = [n for n in names if n != faulty_name]
+        healthy = [n for n in names if n not in faulty_names]
         rounds.append({"round": r, "n_active": len(active), "n_skipped": len(skipped),
                        "n_dropped": len(dropped), "aggregated": aggregated, "bytes": comm,
+                       "val_reported": score,
                        "val_mse_mean": float(np.mean(list(val.values()))),
                        "val_mse_healthy": float(np.mean([val[n] for n in healthy]))})
         if verbose:
@@ -94,9 +112,13 @@ def run_federated(clients_data, cfg, seed, method="fedavg", event_aware=False,
             print(f"    round {r:>2} | active {len(active):>3} | val_mse(healthy) "
                   f"{rounds[-1]['val_mse_healthy']:.5f} | w {wtxt}{flags}")
 
+    if fcfg.get("select_best", True):
+        set_params(global_model, best_params)
+    if verbose:
+        print(f"    selected global model after round {best_round} (reported val {best_score:.5f})")
     name = method + ("_event" if event_aware else "")
     preds = {n: predict(global_model, clients[n].data.test) for n in names}   # clean test data
     vpreds = {n: predict(global_model, clients[n].data.val) for n in names}
     return Result(name, preds, history=rows, val_preds=vpreds,
                   extra={"rounds": pd.DataFrame(rounds), "model_bytes": model_bytes,
-                         "faulty_site": faulty_name})
+                         "faulty_sites": sorted(faulty_names), "best_round": best_round})

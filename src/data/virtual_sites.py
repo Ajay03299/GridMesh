@@ -106,24 +106,26 @@ def params_table(sites):
 FAULT_TYPES = ("feature_corruption", "target_noise", "stale", "bias")
 
 
-def apply_fault(site_df, fault_type, fault_cfg, seed, site_id):
-    """Return a DEGRADED copy of one site's frame. Simulated sensor/meter problems only."""
+def apply_fault(site_df, fault_type, fault_cfg, seed, site_id, severity=1.0):
+    """Return a DEGRADED copy of one site's frame. Simulated sensor/meter problems only.
+    `severity` scales the fault: 0 = no fault, 1 = config values, 2 = twice as strong."""
     rng = np.random.default_rng([seed, site_id, 99])
     df = site_df.copy()
     df.attrs = dict(site_df.attrs)
-    n, c = len(df), fault_cfg[fault_type]
+    n, c, s = len(df), fault_cfg[fault_type], severity
     if fault_type == "feature_corruption":
+        scale = max(0.0, 1 - (1 - c["irradiance_scale"]) * s)
         for col in IRRADIANCE_COLS:
-            df[col] = np.clip(df[col] * c["irradiance_scale"]
-                              * (1 + rng.normal(0, c["noise_std"], n)), 0, None)
+            df[col] = np.clip(df[col] * scale * (1 + rng.normal(0, c["noise_std"] * s, n)), 0, None)
     elif fault_type == "target_noise":
-        df["pv"] = np.clip(df["pv"] + rng.normal(0, c["std"], n) * (df["pv"] > 0), 0, 1)
+        df["pv"] = np.clip(df["pv"] + rng.normal(0, c["std"] * s, n) * (df["pv"] > 0), 0, 1)
     elif fault_type == "stale":
-        idx = (np.arange(n) // c["hold_steps"]) * c["hold_steps"]
+        hold = max(1, int(round(c["hold_steps"] * s)))
+        idx = (np.arange(n) // hold) * hold
         cols = IRRADIANCE_COLS + OTHER_SENSOR_COLS + ["pv"]
         df[cols] = df[cols].to_numpy()[idx]
     elif fault_type == "bias":
-        df["pv"] = np.clip(df["pv"] * c["scale"], 0, 1)
+        df["pv"] = np.clip(df["pv"] * (1 + (c["scale"] - 1) * s), 0, 1)
     else:
         raise ValueError(f"fault_type must be one of {FAULT_TYPES}")
     return df

@@ -171,9 +171,10 @@ def build_client(p, sdf, cfg, scaler=None):
     return client, scaler
 
 
-def prepare_clients(cfg, n_clients=4, seed=42, faulty_client=None, fault_type=None):
+def prepare_clients(cfg, n_clients=4, seed=42, faulty_clients=(), fault_type=None, severity=1.0):
     """Full data pipeline: load -> virtual sites -> features -> time-ordered split.
-    If `faulty_client` (site index) is given, that site also gets a degraded copy `.faulty`."""
+    Sites listed in `faulty_clients` (indices) also get a degraded copy `.faulty`."""
+    faulty_clients = set(faulty_clients or ())
     base_df, meta = load_dataset(cfg)
     seg = segment_labels(base_df["timestamp"], cfg["split"])
     sites = generate_virtual_sites(base_df, cfg, n_clients=n_clients, seed=seed)
@@ -182,8 +183,8 @@ def prepare_clients(cfg, n_clients=4, seed=42, faulty_client=None, fault_type=No
     for p, sdf in sites:
         sdf["seg"] = seg
         client, scaler = build_client(p, sdf, cfg)
-        if faulty_client is not None and p.site_id == faulty_client:
-            bad = apply_fault(sdf, fault_type, cfg["faults"], seed, p.site_id)
+        if p.site_id in faulty_clients:
+            bad = apply_fault(sdf, fault_type, cfg["faults"], seed, p.site_id, severity)
             client.faulty, _ = build_client(p, bad, cfg, scaler=scaler)
         clients.append(client)
     ts = pd.Series(base_df["timestamp"])

@@ -79,6 +79,7 @@ federated:
   client_fraction: 1.0           # share of clients sampled per round (e.g. 0.2 for 100 clients)
   min_clients: 2                 # a round with fewer reporting clients keeps the old model
   dropout_rate: 0.0              # probability a selected client silently drops out
+  select_best: true              # keep the global model with the best client-reported val error
 
 # Reliability-aware aggregation (our prototype mechanism, see src/reliability/trust.py)
 reliability:
@@ -98,7 +99,8 @@ event_aware:
 
 # Simulated faults for ONE site ("degraded data / sensor drift"; not cyber attacks)
 faults:
-  start_round: 6                 # site's data degrades from this round on
+  start_round: 1                 # 1 = site has degraded data for the whole training run
+                                 # (use --fault-start 6 to demo a fault appearing mid-training)
   feature_corruption: {irradiance_scale: 0.6, noise_std: 0.25}  # dirty / misaligned pyranometer
   target_noise: {std: 0.10}                                      # noisy power meter, p.u.
   stale: {hold_steps: 12}                                        # SCADA values frozen in 2-h blocks
@@ -120,3 +122,20 @@ reserve:
     morning_peak: 0.25           # extra load at ~09:00, relative to base
     evening_peak: 0.45           # extra load at ~19:30, relative to base
     noise_std: 0.02
+
+# ------------------------------------------------- experiment matrix (run_experiments.py)
+experiments:
+  seeds: [42, 43, 44]
+  fault_scenarios:               # sites by letter; severity 1 = values in `faults`
+    - {type: target_noise,       sites: [D],    severity: 1}
+    - {type: stale,              sites: [D],    severity: 1}
+    - {type: bias,               sites: [D],    severity: 1}
+    - {type: feature_corruption, sites: [D],    severity: 1}
+    - {type: target_noise,       sites: [C, D], severity: 1}
+    - {type: stale,              sites: [C, D], severity: 1}
+  severity_sweep: {type: stale, sites: [D], severities: [0.5, 1, 2, 4]}
+  dropout_rates: [0.25, 0.5]
+
+plots:
+  example_month: 7               # month whose test days are shown in time-series plots
+  fault_scenario: fault_stale_CD # scenario used for the trust / weights plots

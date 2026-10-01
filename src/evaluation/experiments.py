@@ -39,13 +39,13 @@ def evaluate(result, clients):
         "worst_site": max(per_site, key=lambda k: per_site[k]["rmse"]),
         "mean_site_mae": float(np.mean([v["mae"] for v in per_site.values()])),
     }
-    # damage to HEALTHY sites when one site is faulty (test data is always the clean data)
-    faulty = result.extra.get("faulty_site")
-    healthy = [c for c in clients if c.params.name != faulty]
+    # damage to HEALTHY sites when some sites are faulty (test data is always the clean data)
+    faulty = result.extra.get("faulty_sites", [])
+    healthy = [c for c in clients if c.params.name not in faulty]
     hy = np.concatenate([c.test.y[c.test.daytime] for c in healthy])
     hp = np.concatenate([result.preds[c.params.name][c.test.daytime] for c in healthy])
     hm = regression_metrics(hy, hp)
-    out |= {"healthy_rmse": hm["rmse"], "healthy_mae": hm["mae"], "faulty_site": faulty}
+    out |= {"healthy_rmse": hm["rmse"], "healthy_mae": hm["mae"], "faulty_sites": ",".join(faulty)}
     # federated / system metrics
     rd = result.extra.get("rounds")
     if rd is not None:
@@ -57,6 +57,7 @@ def evaluate(result, clients):
             "total_comm_mb": float(rd["bytes"].sum() / 1e6),
             "mean_comm_kb_per_round": float(rd["bytes"].mean() / 1e3),
             "rounds_skipped": int((~rd["aggregated"]).sum()),
+            "selected_round": int(result.extra.get("best_round", len(rd))),
             "dropped_client_events": int(rd["n_dropped"].sum()),
         }
     out["per_site"] = per_site
@@ -98,8 +99,8 @@ def run_centralized(clients, cfg, seed):
                   val_preds={c.params.name: predict(model, c.val) for c in clients})
 
 
-def save_predictions(result, clients, path):
-    """Long-format CSV of val + test forecasts — input for the reserve simulator.
+def predictions_frame(result, clients):
+    """Long-format DataFrame of val + test forecasts — input for the reserve simulator.
     Validation rows directly precede test rows inside each month, so the reserve
     simulator can warm up its rolling error statistics without touching test data."""
     rows = []
@@ -114,4 +115,8 @@ def save_predictions(result, clients, path):
                 "capacity_mw": c.params.capacity_mw,
                 "actual_pu": split.y, "forecast_pu": pred, "daytime": split.daytime,
             }))
-    pd.concat(rows).to_csv(path, index=False)
+    return pd.concat(rows)
+
+
+def save_predictions(result, clients, path):
+    predictions_frame(result, clients).to_csv(path, index=False)
