@@ -58,18 +58,22 @@ Ours + event-aware participation: lower healthy-site RMSE than FedAvg in **16 of
 | 0.25 | 0.0644 | 0.0641 | 0.0645 |
 | 0.5 | 0.0646 | 0.0643 | 0.0646 |
 
-## 5. Reserve at one aggregation node (forecasts: Reliability-aware FedAvg (ours))
-| Policy | Reserve (% of forecast) | Not served (% of demand) | Reserve (MWh) | Not served (MWh) | Intervals covered (%) | Target (%) | Total cost |
-|---|---|---|---|---|---|---|---|
-| Fixed 20% | 20.0 ± 0.0 | 0.76 ± 0.03 | 1995 | 185 | 87.4 | – | 5689 |
-| n-sigma δ=0.02 | 25.7 ± 0.7 | 0.46 ± 0.01 | 2577 | 112 | 93.7 | 98 | 4820 |
-| n-sigma δ=0.05 | 20.5 ± 0.7 | 0.58 ± 0.02 | 2057 | 141 | 91.8 | 95 | 4880 |
-| n-sigma δ=0.1 | 15.9 ± 0.7 | 0.73 ± 0.02 | 1596 | 176 | 89.1 | 90 | 5114 |
+## 5. Constrained reserve at one aggregation node (5 seeds)
+| Policy | Scheduled backup (MWh) | Not served (MWh) | Interval availability (%) | Planned capacity gap (MWh) | Total assumed cost |
+|---|---:|---:|---:|---:|---:|
+| Fixed 20% of demand | 2421 ± 460 | 310 ± 59 | 79.9 ± 4.9 | 2502 ± 475 | 8621 ± 1641 |
+| n-sigma δ=0.02 | 1674 ± 333 | 301 ± 57 | 84.1 ± 1.1 | 997 ± 176 | 7690 ± 1480 |
+| **n-sigma δ=0.05** | **1576 ± 312** | **278 ± 52** | **85.2 ± 0.9** | **576 ± 97** | **7137 ± 1344** |
+| n-sigma δ=0.10 | 1419 ± 282 | 252 ± 45 | 85.6 ± 0.8 | 272 ± 41 | 6463 ± 1172 |
+| empirical δ=0.05 | 1647 ± 328 | 263 ± 45 | 85.2 ± 0.8 | 974 ± 157 | 6907 ± 1222 |
 
-n-sigma reserve: `r = max(α·σ_e − μ_e, 0)`, `α = Φ⁻¹(1−δ)`, causal 6-hour rolling error statistics
-(inspired by Khaing, Kannan & Rao, *Clean Energy* 2026). Costs: 1 unit
-per MWh of reserve, 20 units per MWh not served — **simulation
-assumptions**. Demand is **synthetic**.
+Relative to the fixed baseline, n-sigma δ=0.05 uses **34.9% less scheduled backup**, produces
+**10.3% less unserved energy**, and lowers assumed total cost **17.2%**. The scheduler first forms
+`expected demand gap + uncertainty margin`, then solves a daily linear program with grid-import,
+backup-power and backup-energy limits. The n-sigma margin is
+`m = max(α·σ_e − μ_e, 0)`, `α = Φ⁻¹(1−δ)`, using causal 6-hour error statistics (inspired by
+Khaing, Kannan & Rao, *Clean Energy* 2026). Demand, capacities, limits and costs are **simulation
+assumptions**. Nominal margin coverage is not claimed as end-to-end feeder availability.
 
 
 ## 6. Scaling 4 → 100 sites (scale simulation, 1 seed, 5 rounds)

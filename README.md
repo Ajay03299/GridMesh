@@ -1,4 +1,4 @@
-# GridMesh — Reliability-aware Federated Renewable Forecasting
+# GridMesh — Neighbourhood Solar Reliability with Federated Learning
 
 Hackathon prototype · Yuva Yodha Energy Tech Hackathon · Grid Reliability & Renewable Intermittency track.
 
@@ -8,18 +8,33 @@ Hackathon prototype · Yuva Yodha Energy Tech Hackathon · Grid Reliability & Re
 Grid operators must hold reserve for the gap between forecast and actual renewable output.
 Better short-horizon forecasts mean less reserve for the same reliability — but renewable sites
 are owned by different operators who do not want to pool raw data, and some sites have bad
-sensors. GridMesh lets sites train a shared forecaster **without sharing raw data** (Federated
-Learning), makes the aggregation **robust to sites with degraded data**, and turns forecast
-uncertainty into a **reserve requirement** at an aggregation node.
+sensors. GridMesh lets sites train a shared forecaster **without routinely pooling raw data**,
+makes aggregation **robust to degraded sensors**, and turns forecast uncertainty into a
+**physically constrained backup schedule** at one neighbourhood node.
 
-FL itself is not our novelty. Our contribution is the reliability-aware integration
-(trust-weighted aggregation + event-aware participation + reserve sizing) and its honest evaluation.
+FL itself is not our novelty. Our contribution is the reliability-aware integration:
+trust-weighted aggregation, event-aware participation, and a scheduler that separates the expected
+supply gap from forecast uncertainty. Every policy faces the same power, energy, and cost limits.
+
+## Purpose and judging alignment
+- **Efficiency:** event-aware participation reduces unnecessary client training and communication;
+  the scheduler commits the least-cost feasible backup under the selected risk rule.
+- **Sustainability:** improved forecasts can reduce unnecessary backup commitment. The evaluation
+  measures this effect instead of assuming it.
+- **Accessibility:** the operator sees the expected gap, uncertainty allowance, recommended backup,
+  and a clear capacity warning. Software cost remains separate from hardware and energy.
+- **Scalability:** the same interfaces run from 4 to 100 virtual sites; sampled participation and
+  repeatable neighbourhood coordinators avoid one unconstrained city-scale optimizer.
+
+Target users are community energy operators, ESCOs, and DISCOM teams managing clusters that already
+have solar, metering, and accessible dispatchable backup. GridMesh cannot create missing energy or
+replace protection, islanding, or utility operating procedures.
 
 ## Quick start (macOS / Linux)
 ```bash
 python3 -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python audit.py                    # 21 automated correctness checks (~30 s)
+python audit.py                    # 24 automated correctness checks
 python run_experiments.py          # full experiment matrix, 5 seeds, plots + RESULTS.md (~7 min)
 python run_scaling.py              # communication + accuracy, 4 -> 100 sites (~2 min)
 python build_dashboard.py          # pre-compute the 4 dashboard scenarios (~30 s)
@@ -37,10 +52,12 @@ python -m streamlit run dashboard.py   # demo dashboard in the browser (Ctrl+C t
 | `python run_simulation.py --methods fl --dropout-rate 0.25` | random client dropout |
 | `python run_simulation.py --split chronological` | seasonal-shift stress test (train Jan–Sep, test Nov–Dec) |
 | `python run_simulation.py --clients 100 --rounds 10 --client-fraction 0.2 --methods smart_persistence,fl` | 100-site scale run |
-| `python run_reserve_sim.py [--policy fixed20 \| nsigma] [--delta 0.05]` | reserve node on the last run's forecasts |
+| `python run_model_comparison.py [--quick]` | federated MLP / GRU / LSTM under one protocol |
+| `python run_reserve_sim.py [--policy fixed20 \| nsigma \| empirical \| all] [--delta 0.05]` | constrained one-node backup schedule |
 | `python run_experiments.py [--quick]` | full matrix over seeds → tables, `summary.json`, 13 plots, `RESULTS.md` |
 | `python run_scaling.py` | traffic per round and accuracy for 4, 20, 50, 100 sites → plot 14 |
-| `python audit.py` | 21 correctness checks: leakage, maths, reserve causality and calibration, faults, determinism, real-data path — run before every push |
+| `python audit.py` | 24 correctness checks: leakage, maths, three model families, reserve causality, constrained scheduling, faults, determinism and real-data path |
+| `python run_reserve_benchmark.py` | five-seed constrained reserve benchmark used in the pitch |
 | `python build_dashboard.py` + `python -m streamlit run dashboard.py` | dashboard: NORMAL / FAULTY CLIENT / CLIENT DROPOUT / WEATHER-REGIME SHIFT |
 
 Options: `--fault-type stale (default) | target_noise | bias | feature_corruption`, `--fault-severity 2`,
@@ -80,22 +97,26 @@ data/raw/*.csv ─► adapter ─► virtual_sites (simulated heterogeneity, fau
 │
 preprocessing (lags, clear-sky features, blocked monthly split, per-site scaling)
 │
-┌────────── site A ── site B ── … ── site N (raw data never leaves a site)
-│ local training (MLP 64-64, learns correction to smart persistence)
+┌────────── site A ── site B ── … ── site N (raw histories remain local by design)
+│ local training (MLP / GRU / LSTM, correction to smart persistence)
 │ report: parameters + n_samples + val error of received model + data-quality
 ▼
 server: FedAvg | reliability-aware FedAvg | + event-aware participation
 │ best-round selection from client-reported validation error
 ▼
-forecasts ─► aggregation node: fixed 20% vs n-sigma reserve ─► shortfall, cost
+forecasts + demand + asset limits ─► expected gap + uncertainty margin
+                                      │
+                                      ▼
+                            constrained backup LP ─► schedule, capacity warning, cost
 
-Code: `src/data` (loading, sites, features), `src/models` (MLP), `src/federated` (client,
+Code: `src/data` (loading, sites, features), `src/models` (MLP / GRU / LSTM), `src/federated` (client,
 server, aggregators, selection), `src/reliability` (trust, drift), `src/reserve`,
 `src/evaluation` (metrics, experiments, report), `src/visualization`.
 
 ## Algorithms
-**Forecast target.** +30 min PV power. The MLP predicts the *correction* to smart (clear-sky)
-persistence — chosen on validation data, it beat direct prediction on every site.
+**Forecast target.** +30 min PV power. Each selectable backbone predicts the *correction* to smart
+(clear-sky) persistence. MLP remains the default so the published repository results stay comparable;
+`run_model_comparison.py` evaluates MLP, GRU and LSTM under the same federated protocol.
 
 **Reliability-aware aggregation (our prototype formula, not a published method).** Each round,
 clients score the model they *received* on their own recent validation data (e_k):
@@ -114,10 +135,19 @@ if that model had been trained at least once.
 **Model selection.** Like early stopping in the baselines: the server keeps the global model with
 the lowest client-reported validation error (weighted like that method's aggregation).
 
-**Reserve.** Node forecast/actual = Σ capacity_k · p.u._k. Error `e = actual − forecast`.
-Fixed: `r = 0.20 · forecast`. n-sigma (inspired by Khaing, Kannan & Rao, *Clean Energy* 2026):
-`r = max(α·σ_e − μ_e, 0)`, `α = Φ⁻¹(1−δ)`, with μ_e, σ_e from the last 6 h of errors already
-observable when the forecast is issued.
+**Uncertainty margin.** Node forecast/actual = Σ capacity_k · p.u._k. Error
+`e = actual − forecast`. Fixed baseline: `m = 0.20 · demand`. Gaussian benchmark (Khaing,
+Kannan & Rao, *Clean Energy* 2026, Theorem 4.3): `m = max(α·σ_e − μ_e, 0)`,
+`α = Φ⁻¹(1−δ)`, using only errors observable when the forecast is issued. The empirical policy
+uses a rolling observed tail quantile and avoids the Gaussian shape assumption.
+
+**Constrained backup schedule.** The node first schedules grid import up to its assumed limit, then
+computes `expected_gap = max(demand − grid − solar_forecast, 0)` and
+`required_backup = expected_gap + margin`. A daily linear program minimizes backup commitment plus
+planned uncovered requirement while enforcing backup power and energy limits. Real-time evaluation
+deploys the scheduled backup against `max(demand − grid − solar_actual, 0)`. Inadequate capacity
+produces an explicit warning rather than an unsupported availability claim. Demand, grid, backup,
+and cost inputs are simulation assumptions.
 
 ## Experimental design (and why)
 - **Blocked monthly split:** in every month the first 70% of days train, the next 15% validate, the
@@ -147,12 +177,12 @@ observable when the forecast is issued.
 - **Event-aware participation** halves communication (≈ −50%) for a small accuracy cost
   (RMSE ≈ 0.065 vs 0.064).
 - **Dropout** up to 50%: training continues; RMSE changes by about 1% or less.
-- **Reserve:** n-sigma δ = 0.05 holds about the same reserve as fixed 20% (+3–4%) with ~24% less
-  energy not served; δ = 0.10 holds ~20% less reserve with slightly less energy not served. n-sigma
-  **misses its own availability target** (≈ 92% vs 95%). The audit shows the rule hits its target
-  on Gaussian errors, so the gap comes from the data: errors cluster on cloudy days and the 6-h
-  window reacts late. A single-seed check: measured error quantiles do not fix it, a 12-h window
-  meets the target at δ = 0.10. The window was not re-tuned on test data.
+- **Constrained reserve:** with explicit grid-import, backup-power and daily-energy limits, the
+  n-sigma δ = 0.05 policy uses **34.9% less scheduled backup**, produces **10.3% less unserved
+  energy**, and lowers assumed operating cost **17.2%** versus a fixed 20%-of-demand margin
+  (five-seed means). Nominal uncertainty coverage is not an end-to-end availability guarantee:
+  asset limits create a visible planned capacity gap. The empirical tail policy is included as a
+  non-Gaussian benchmark; no window was tuned on the test set.
 - **Scaling to 100 sites** (plot 14, all sites eligible every round): FedAvg traffic grows linearly
   (≈ 6.4 MB per round at 100 sites); event-aware participation cuts it by ~40% at the same
   accuracy. ~3 GB RAM, under a minute on a MacBook. With 20% of sites faulty and 20% sampling per
@@ -166,8 +196,9 @@ observable when the forecast is issued.
 | Real plants | SCADA power + per-site satellite weather, one client per plant | `config.yaml` (`site_col`, `target`), `real_sites()` in `src/data/virtual_sites.py` |
 | Real network | sites as separate processes (gRPC / MQTT, e.g. the Flower framework) | `src/federated/client.py` and `server.py` keep their `fit / evaluate / weights` interface |
 | Privacy | secure aggregation (pairwise masking), optional differential privacy | aggregation step in `src/federated/fedavg.py` |
-| Better model | GRU / temporal model, personalised last layer per site | `src/models/forecasting_model.py` |
-| Calibrated reserve | regime-aware error windows chosen on validation data | `src/reserve/reserve_policy.py` |
+| Model selection | validate MLP / GRU / LSTM and personalised layers with measured sites | `src/models/forecasting_model.py` |
+| Calibrated reserve | select Gaussian or empirical windows on validation data | `src/reserve/reserve_policy.py` |
+| Asset-constrained schedule | replace assumed grid / backup limits with operator data | `src/reserve/simulator.py` |
 | Drift handling | fine-tune when drift fires (fixes the seasonal-shift weakness) | `src/reliability/drift.py`, `server.py` |
 | Live operation | forecasts every 10 min streamed into the dashboard | `dashboard.py` |
 

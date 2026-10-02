@@ -111,7 +111,9 @@ def write_results_md(out, cfg):
     dp = dp.round(4)
     rr = res[res.forecast == cfg["reserve"]["forecast_method"]]
     r = pd.DataFrame({
-        "Policy": rr.policy.str.replace("fixed_20pct", "Fixed 20%").str.replace("nsigma_d", "n-sigma δ="),
+        "Policy": (rr.policy.str.replace("fixed_20pct", "Fixed 20% of demand")
+                   .str.replace("nsigma_d", "Gaussian δ=")
+                   .str.replace("empirical_d", "Empirical δ=")),
         "Reserve (% of forecast)": [_pm(a, b, 1) for a, b in
                                     zip(rr.reserve_pct_of_forecast_mean, rr.reserve_pct_of_forecast_std)],
         "Not served (% of demand)": [_pm(a, b, 2) for a, b in
@@ -119,7 +121,8 @@ def write_results_md(out, cfg):
         "Reserve (MWh)": rr.reserve_energy_mwh_mean.round(0).astype(int),
         "Not served (MWh)": rr.shortfall_energy_mwh_mean.round(0).astype(int),
         "Intervals covered (%)": rr.availability_pct_mean.round(1),
-        "Target (%)": [f"{100 * (1 - float(p.split('_d')[1])):.0f}" if "nsigma" in p else "–"
+        "Target (%)": [f"{100 * (1 - float(p.split('_d')[1])):.0f}"
+                       if ("nsigma" in p or "empirical" in p) else "–"
                        for p in rr.policy],
         "Total cost": rr.total_cost_mean.round(0).astype(int),
     })
@@ -158,13 +161,15 @@ Faults are simulated sensor/meter problems present for the whole training run
 ## 4. Client dropout — test RMSE
 {_md(dp)}
 
-## 5. Reserve at one aggregation node (forecasts: {NAMES[rc['forecast_method']].strip('*')})
+## 5. Constrained backup schedule at one aggregation node (forecasts: {NAMES[rc['forecast_method']].strip('*')})
 {_md(r)}
 
-n-sigma reserve: `r = max(α·σ_e − μ_e, 0)`, `α = Φ⁻¹(1−δ)`, causal 6-hour rolling error statistics
-(inspired by Khaing, Kannan & Rao, *Clean Energy* 2026). Costs: {rc['cost_reserve_per_mwh']:g} unit
-per MWh of reserve, {rc['cost_shortfall_per_mwh']:g} units per MWh not served — **simulation
-assumptions**. Demand is **synthetic**.
+Gaussian margin: `m = max(α·σ_e − μ_e, 0)`, `α = Φ⁻¹(1−δ)`, using causal rolling errors
+(Khaing, Kannan & Rao, *Clean Energy* 2026, Theorem 4.3). The empirical benchmark uses a
+causal observed tail quantile. The scheduler adds the expected demand-supply gap and enforces
+assumed grid-import, backup-power, and daily-energy limits. Costs: {rc['cost_reserve_per_mwh']:g}
+unit per MWh scheduled and {rc['cost_shortfall_per_mwh']:g} units per MWh not served —
+**simulation assumptions**. Demand and asset limits are **synthetic / assumed**.
 
 """ + _scaling_section(t) + """
 ## Plots

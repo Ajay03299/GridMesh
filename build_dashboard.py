@@ -73,7 +73,9 @@ def build(name, sc, base_cfg, out, n_clients):
         if m == OURS:
             ns, fx = runs[ns_key][0], runs[fixed_key][0]
             node = ns[["time", "split", "daytime", "capacity_mw", "forecast_mw", "actual_mw",
-                       "demand_mw", "deficit_mw", "reserve_mw", "shortfall_mw", "mu_e", "sigma_e"]]
+                       "demand_mw", "grid_import_mw", "expected_gap_mw",
+                       "uncertainty_margin_mw", "required_backup_mw", "planned_gap_mw",
+                       "deficit_mw", "reserve_mw", "shortfall_mw", "mu_e", "sigma_e"]]
             node = node.assign(reserve_fixed_mw=fx["reserve_mw"].to_numpy(),
                                shortfall_fixed_mw=fx["shortfall_mw"].to_numpy())
             kpi["reserve"] = {k: {x: v[1][x] for x in ("reserve_pct_of_forecast",

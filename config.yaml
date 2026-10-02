@@ -63,6 +63,9 @@ virtual_sites:
 
 # ----------------------------------------------------------------- model
 model:
+  architecture: mlp              # mlp | gru | lstm; shared by local/pooled/federated runs
+  lookback: 6                    # must match features.lookback
+  sequence_features: 6           # count of lagged variables, len(features.lagged)
   # residual_smart_persistence: network learns the CORRECTION to clear-sky persistence
   #   (chosen on the validation set; beat "direct" on all 4 sites). "direct" also supported.
   target: residual_smart_persistence
@@ -114,13 +117,21 @@ faults:
 # ALL numbers below are SIMULATION ASSUMPTIONS, not market or utility data.
 reserve:
   forecast_method: reliability_fedavg   # which forecast feeds the node
-  fixed_fraction: 0.20           # policy A: reserve = 20% of the renewable forecast
+  fixed_fraction: 0.20           # baseline uncertainty margin = 20% of demand
   delta: 0.05                    # policy B: target shortfall probability (alpha = Phi^-1(1-delta))
   delta_sweep: [0.02, 0.05, 0.10]
   window: 36                     # rolling window of past DAYTIME errors (36 x 10 min = 6 h)
+  empirical_window: 72           # 12 h of past daytime errors for empirical tail calibration
   min_periods: 12
   cost_reserve_per_mwh: 1.0      # cost units per MWh of reserve held (assumption)
   cost_shortfall_per_mwh: 20.0   # cost units per MWh not served (assumption, ~VoLL ratio)
+  peak_priority_weight: 2.0      # prioritize high-requirement intervals when energy is scarce
+  grid_import_limit_mw: null      # null -> fraction of installed PV capacity below
+  grid_import_limit_fraction: 0.90  # feeder can import up to 90% of installed PV nameplate
+  backup_power_limit_mw: null     # null -> fraction of installed PV capacity below
+  backup_power_fraction: 0.25
+  backup_energy_limit_mwh: null   # null -> backup_energy_hours * backup power limit
+  backup_energy_hours: 4.0        # daily planning budget; simulation assumption
   demand:                        # SYNTHETIC demand curve (no real demand data available)
     base_mw_per_mw_capacity: 0.8 # base load relative to total installed renewable capacity
     morning_peak: 0.25           # extra load at ~09:00, relative to base
