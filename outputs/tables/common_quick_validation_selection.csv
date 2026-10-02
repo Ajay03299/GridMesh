@@ -1,0 +1,5 @@
+seed,method,validation_rank,validation_rmse
+42,local_xgboost,1,0.061769623309373856
+42,reliability_fedavg,2,0.06205744847591897
+42,reliability_fedavg_event,3,0.06276513043011162
+42,smart_persistence,4,0.06909294426441193

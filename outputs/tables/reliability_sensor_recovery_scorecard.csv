@@ -1,0 +1,4 @@
+scenario,method,healthy_rmse,worst_site_rmse,participation,comm_mb,fallback_rounds
+sensor_recovery,fedavg,0.06379743276210188,0.06671802500665804,1.0,7.624640000000001,0.0
+sensor_recovery,reliability_fedavg,0.06413400658733132,0.0668729717758652,0.93,7.0909152,0.0
+sensor_recovery,reliability_fedavg_event,0.0640017685299283,0.06684389980904885,0.48,3.6604928,8.6

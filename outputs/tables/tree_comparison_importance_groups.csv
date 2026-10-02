@@ -1,0 +1,121 @@
+seed,method,group,importance
+42,centralized_xgboost,Clear-sky information,0.03319059684872627
+42,centralized_xgboost,Cloud type,0.13054242194630206
+42,centralized_xgboost,Humidity,0.015967760235071182
+42,centralized_xgboost,Irradiance,0.43429374881088734
+42,centralized_xgboost,Other atmosphere,0.07511706277728081
+42,centralized_xgboost,Recent PV,0.08161066751927137
+42,centralized_xgboost,Solar position / calendar,0.10779427364468575
+42,centralized_xgboost,Temperature,0.12148352060467005
+42,decision_tree,Clear-sky information,0.16588043603085656
+42,decision_tree,Cloud type,0.054506417611590564
+42,decision_tree,Humidity,0.024824437123763067
+42,decision_tree,Irradiance,0.3563036875996587
+42,decision_tree,Other atmosphere,0.16754800069526418
+42,decision_tree,Recent PV,0.07733425118712599
+42,decision_tree,Solar position / calendar,0.10733111982944396
+42,decision_tree,Temperature,0.04627164992229696
+42,local_xgboost,Clear-sky information,0.030295372009277344
+42,local_xgboost,Cloud type,0.1265745575656183
+42,local_xgboost,Humidity,0.017977516632527113
+42,local_xgboost,Irradiance,0.42475895024836063
+42,local_xgboost,Other atmosphere,0.06899262126535177
+42,local_xgboost,Recent PV,0.09397680428810418
+42,local_xgboost,Solar position / calendar,0.10763181000947952
+42,local_xgboost,Temperature,0.1297923617530614
+43,centralized_xgboost,Clear-sky information,0.03158550336956978
+43,centralized_xgboost,Cloud type,0.14561051549389958
+43,centralized_xgboost,Humidity,0.012341495603322983
+43,centralized_xgboost,Irradiance,0.4407847784459591
+43,centralized_xgboost,Other atmosphere,0.0655527226626873
+43,centralized_xgboost,Recent PV,0.10353833064436913
+43,centralized_xgboost,Solar position / calendar,0.09768923558294773
+43,centralized_xgboost,Temperature,0.1028972826898098
+43,decision_tree,Clear-sky information,0.125714845740543
+43,decision_tree,Cloud type,0.09947560122183358
+43,decision_tree,Humidity,0.014535317394950377
+43,decision_tree,Irradiance,0.40559723021721733
+43,decision_tree,Other atmosphere,0.14030742952301567
+43,decision_tree,Recent PV,0.08468200328996069
+43,decision_tree,Solar position / calendar,0.12166160494632061
+43,decision_tree,Temperature,0.008025967666158717
+43,local_xgboost,Clear-sky information,0.02588381036184728
+43,local_xgboost,Cloud type,0.12869627121835947
+43,local_xgboost,Humidity,0.015375515446066856
+43,local_xgboost,Irradiance,0.4375224800314754
+43,local_xgboost,Other atmosphere,0.06231644004583359
+43,local_xgboost,Recent PV,0.09504124475643039
+43,local_xgboost,Solar position / calendar,0.11280175601132214
+43,local_xgboost,Temperature,0.12236245907843113
+44,centralized_xgboost,Clear-sky information,0.033998556435108185
+44,centralized_xgboost,Cloud type,0.16131393052637577
+44,centralized_xgboost,Humidity,0.013644009828567505
+44,centralized_xgboost,Irradiance,0.42282154969871044
+44,centralized_xgboost,Other atmosphere,0.06302991695702076
+44,centralized_xgboost,Recent PV,0.09465556591749191
+44,centralized_xgboost,Solar position / calendar,0.09671802073717117
+44,centralized_xgboost,Temperature,0.11381849553436041
+44,decision_tree,Clear-sky information,0.1284602117916985
+44,decision_tree,Cloud type,0.10617082918358257
+44,decision_tree,Humidity,0.0026558388560388494
+44,decision_tree,Irradiance,0.4137686623010902
+44,decision_tree,Other atmosphere,0.134319551824
+44,decision_tree,Recent PV,0.08052347658873299
+44,decision_tree,Solar position / calendar,0.11696094101047025
+44,decision_tree,Temperature,0.017140488444386755
+44,local_xgboost,Clear-sky information,0.028362173587083817
+44,local_xgboost,Cloud type,0.1165333776443731
+44,local_xgboost,Humidity,0.016339410096406937
+44,local_xgboost,Irradiance,0.4378170983400196
+44,local_xgboost,Other atmosphere,0.0633656489662826
+44,local_xgboost,Recent PV,0.09777565416879952
+44,local_xgboost,Solar position / calendar,0.1127528422512114
+44,local_xgboost,Temperature,0.12705380516126752
+45,centralized_xgboost,Clear-sky information,0.030521489679813385
+45,centralized_xgboost,Cloud type,0.1569045572541654
+45,centralized_xgboost,Humidity,0.013513332232832909
+45,centralized_xgboost,Irradiance,0.41674179304391146
+45,centralized_xgboost,Other atmosphere,0.06114309746772051
+45,centralized_xgboost,Recent PV,0.10368304792791605
+45,centralized_xgboost,Solar position / calendar,0.10748042073100805
+45,centralized_xgboost,Temperature,0.11001227144151926
+45,decision_tree,Clear-sky information,0.11624234595358045
+45,decision_tree,Cloud type,0.1024175051655637
+45,decision_tree,Humidity,0.020862999984280966
+45,decision_tree,Irradiance,0.39432666903129426
+45,decision_tree,Other atmosphere,0.10968590654993005
+45,decision_tree,Recent PV,0.12602539903240714
+45,decision_tree,Solar position / calendar,0.1098679288652777
+45,decision_tree,Temperature,0.020571245417665765
+45,local_xgboost,Clear-sky information,0.02383923763409257
+45,local_xgboost,Cloud type,0.14229871654970339
+45,local_xgboost,Humidity,0.015072179958224297
+45,local_xgboost,Irradiance,0.4193749828264117
+45,local_xgboost,Other atmosphere,0.05770233110524714
+45,local_xgboost,Recent PV,0.09927050722762942
+45,local_xgboost,Solar position / calendar,0.10935385664924979
+45,local_xgboost,Temperature,0.13308819592930377
+46,centralized_xgboost,Clear-sky information,0.03324684500694275
+46,centralized_xgboost,Cloud type,0.13832561275921762
+46,centralized_xgboost,Humidity,0.01679731160402298
+46,centralized_xgboost,Irradiance,0.41048407182097435
+46,centralized_xgboost,Other atmosphere,0.07147442176938057
+46,centralized_xgboost,Recent PV,0.09487314242869616
+46,centralized_xgboost,Solar position / calendar,0.11247031763195992
+46,centralized_xgboost,Temperature,0.12232819199562073
+46,decision_tree,Clear-sky information,0.1215415710319537
+46,decision_tree,Cloud type,0.05329406106179989
+46,decision_tree,Humidity,0.006600470759789871
+46,decision_tree,Irradiance,0.28544321069503864
+46,decision_tree,Other atmosphere,0.20933730101313186
+46,decision_tree,Recent PV,0.11710643509069277
+46,decision_tree,Solar position / calendar,0.17611604225709973
+46,decision_tree,Temperature,0.030560908090493496
+46,local_xgboost,Clear-sky information,0.03157954989001155
+46,local_xgboost,Cloud type,0.12703551261802204
+46,local_xgboost,Humidity,0.017264791065827012
+46,local_xgboost,Irradiance,0.419851697050035
+46,local_xgboost,Other atmosphere,0.07026921818032861
+46,local_xgboost,Recent PV,0.10028066765516996
+46,local_xgboost,Solar position / calendar,0.10678143170662224
+46,local_xgboost,Temperature,0.12693712231703103

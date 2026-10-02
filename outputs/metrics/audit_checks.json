@@ -1,0 +1,186 @@
+{
+  "passed": 36,
+  "total": 36,
+  "checks": [
+    {
+      "passed": true,
+      "name": "data: one year, regular 10-min steps, no gaps or missing values",
+      "detail": "52,560 rows"
+    },
+    {
+      "passed": true,
+      "name": "pv model: output in [0, 1], zero at night, rises with irradiance",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "virtual sites: site k is identical whether you simulate 4 or 100 sites",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "leakage: train / val / test target times never overlap",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "leakage: no input window crosses a train/val/test boundary",
+      "detail": "52,272 windows"
+    },
+    {
+      "passed": true,
+      "name": "leakage: only deterministic values (sun position, clear-sky, calendar) from t+h",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "leakage: scaling fitted on each site's TRAIN data only",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "split: every site is validated and tested on all 12 months",
+      "detail": "training months per site (younger plants see fewer seasons = non-IID): {'A': 10, 'B': 11, 'C': 9, 'D': 9}"
+    },
+    {
+      "passed": true,
+      "name": "smart persistence: exact when output tracks clear-sky",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "models: MLP, GRU and LSTM accept the same feature vector",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "trees: decision tree fits residual target and returns bounded forecasts",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "trees: residual target is exactly actual minus smart persistence",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "XGBoost: deterministic residual forecasts, validation-only early stopping, bounded output",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "FedAvg: aggregation is the exact weighted average",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "reliability weights: sum to 1, equal sites -> n*quality, outlier down-weighted, then quarantined",
+      "detail": "outlier weight 0.200 -> 0.000"
+    },
+    {
+      "passed": true,
+      "name": "drift detector: quiet on small wobbles, fires on a real jump",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "client selection: sampling size, dropout, drifting sites always join",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "client selection: max-clients cap bounds each round",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "safety: non-finite and extreme-norm updates are rejected with reasons",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "safety: deterministic fallback chain and validation rollback gate",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "safety: real forecast fallback ordering, stale age and explicit failure",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "rollback: prediction, worst-site, bias and persistence gates give explicit reasons",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "selection: quarantine exclusion, recovery probes and bounded drift priority",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "trust: quarantine recovers after healthy reports and all-quarantined weights stay zero",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "hierarchy: composed weights equal two-stage parameter averaging",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "federated: deterministic (same seed -> identical forecasts)",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "federated: training improves on the untrained model",
+      "detail": "reported val MSE 0.01331 -> 0.00384"
+    },
+    {
+      "passed": true,
+      "name": "communication accounting: 3 model transfers + gate metadata + heartbeats",
+      "detail": "model update = 31.0 KB"
+    },
+    {
+      "passed": true,
+      "name": "faults: each fault degrades only the copy, in the intended way",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "faults: baselines train on the degraded copy; healthy metrics exclude faulty sites",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "reserve: n-sigma is causal (future errors never change today's reserve)",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "reserve: on Gaussian errors the rule hits its target (implementation is calibrated)",
+      "detail": "target->achieved 98%->97.6%, 95%->94.4%, 90%->89.3%"
+    },
+    {
+      "passed": true,
+      "name": "reserve: empirical margin is causal and uses an observed tail value",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "calibration: future residuals cannot change current guarded margin or warning",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "scheduler: expected gap, power cap and daily energy cap are enforced",
+      "detail": ""
+    },
+    {
+      "passed": true,
+      "name": "real data path: measured power column + site-ID column -> one client per site",
+      "detail": ""
+    }
+  ]
+}

@@ -1,0 +1,390 @@
+{
+  "args": {
+    "sizes": "4,20,50,100,250,500",
+    "rounds": 3,
+    "max_clients_per_round": 20,
+    "max_sites": 20,
+    "quick": true
+  },
+  "config": {
+    "seed": 42,
+    "data": {
+      "path": "data/raw/wind.csv",
+      "timestamp_col": "auto",
+      "assumed_year": 2019,
+      "target_col": "WindSpeed_Class",
+      "power_col": null,
+      "site_col": null,
+      "task": "auto"
+    },
+    "target": {
+      "mode": "pv_from_irradiance",
+      "column": null,
+      "capacity": null,
+      "capacity_col": null,
+      "column_unit_mw": 1.0
+    },
+    "pv_model": {
+      "noct": 45.0,
+      "ref_irradiance": 1000.0,
+      "inverter_clip": 1.0
+    },
+    "split": {
+      "mode": "blocked_monthly",
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "features": {
+      "lookback": 6,
+      "horizon": 3,
+      "lagged": [
+        "pv",
+        "GHI",
+        "DNI",
+        "DHI",
+        "kt",
+        "Temperature"
+      ],
+      "current": [
+        "Relative Humidity",
+        "Pressure",
+        "Precipitable Water",
+        "Aerosol Optical Depth",
+        "Dew Point"
+      ],
+      "cloud_type_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "future_known": [
+        "Clearsky GHI",
+        "cos_zenith",
+        "hour_sin",
+        "hour_cos",
+        "doy_sin",
+        "doy_cos"
+      ],
+      "daytime_zenith_max": 85.0
+    },
+    "virtual_sites": {
+      "capacity_mw": [
+        5.0,
+        20.0
+      ],
+      "derate": [
+        0.8,
+        0.9
+      ],
+      "temp_coeff": [
+        -0.0045,
+        -0.0035
+      ],
+      "sensor_noise_std": [
+        0.0,
+        0.05
+      ],
+      "sensor_bias": [
+        -0.03,
+        0.03
+      ],
+      "missing_rate": [
+        0.0,
+        0.03
+      ],
+      "target_noise_std": [
+        0.0,
+        0.01
+      ],
+      "history_fraction": [
+        0.2,
+        1.0
+      ]
+    },
+    "model": {
+      "architecture": "mlp",
+      "cpu_threads": 1,
+      "lookback": 6,
+      "sequence_features": 6,
+      "target": "residual_smart_persistence",
+      "hidden": [
+        64,
+        64
+      ],
+      "lr": 0.001,
+      "batch_size": 256,
+      "epochs": 15,
+      "weight_decay": 0.0
+    },
+    "tree_models": {
+      "decision_tree": {
+        "max_depth": 8,
+        "min_samples_leaf": 30
+      },
+      "xgboost": {
+        "n_estimators": 600,
+        "learning_rate": 0.03,
+        "max_depth": 6,
+        "min_child_weight": 5,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "early_stopping_rounds": 40,
+        "n_jobs": 4
+      }
+    },
+    "paths": {
+      "outputs": "outputs"
+    },
+    "federated": {
+      "rounds": 2,
+      "local_epochs": 1,
+      "client_fraction": 1.0,
+      "min_clients": 2,
+      "max_clients_per_round": 20,
+      "neighbourhood_size": 25,
+      "dropout_rate": 0.0,
+      "select_best": true
+    },
+    "reliability": {
+      "error_tolerance": 0.25,
+      "error_sharpness": 2.0,
+      "trust_ema": 0.5,
+      "quarantine_below": 0.2,
+      "use_data_quality": true
+    },
+    "safety": {
+      "max_update_norm_ratio": 8.0,
+      "rollback_val_ratio": 1.35,
+      "max_site_validation_rmse": 0.25,
+      "max_validation_bias": 0.1,
+      "max_baseline_rmse_ratio": 2.0,
+      "baseline_rmse_floor": 0.1,
+      "calibration_window": 72,
+      "calibration_tolerance": 0.03,
+      "fallback_chain": [
+        "last_trusted_model",
+        "local_model",
+        "smart_persistence"
+      ]
+    },
+    "event_aware": {
+      "drift_k": 2.0,
+      "window": 5,
+      "min_history": 3,
+      "min_rel_increase": 0.1,
+      "stable_participation": 0.5,
+      "heartbeat_bytes": 16
+    },
+    "faults": {
+      "start_round": 1,
+      "feature_corruption": {
+        "irradiance_scale": 0.6,
+        "noise_std": 0.25
+      },
+      "target_noise": {
+        "std": 0.1
+      },
+      "stale": {
+        "hold_steps": 12
+      },
+      "bias": {
+        "scale": 1.25
+      }
+    },
+    "reserve": {
+      "forecast_method": "reliability_fedavg",
+      "fixed_fraction": 0.2,
+      "delta": 0.05,
+      "delta_sweep": [
+        0.02,
+        0.05,
+        0.1
+      ],
+      "window": 36,
+      "empirical_window": 72,
+      "min_periods": 12,
+      "cost_reserve_per_mwh": 1.0,
+      "cost_shortfall_per_mwh": 20.0,
+      "peak_priority_weight": 2.0,
+      "grid_import_limit_mw": null,
+      "grid_import_limit_fraction": 0.9,
+      "backup_power_limit_mw": null,
+      "backup_power_fraction": 0.25,
+      "backup_energy_limit_mwh": null,
+      "backup_energy_hours": 4.0,
+      "demand": {
+        "base_mw_per_mw_capacity": 0.8,
+        "morning_peak": 0.25,
+        "evening_peak": 0.45,
+        "noise_std": 0.02
+      }
+    },
+    "experiments": {
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "fault_scenarios": [
+        {
+          "type": "target_noise",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "bias",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "feature_corruption",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "target_noise",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        }
+      ],
+      "severity_sweep": {
+        "type": "stale",
+        "sites": [
+          "D"
+        ],
+        "severities": [
+          0.5,
+          1,
+          2,
+          4
+        ]
+      },
+      "dropout_rates": [
+        0.25,
+        0.5
+      ]
+    },
+    "plots": {
+      "example_month": 7,
+      "fault_scenario": "fault_stale_CD"
+    }
+  },
+  "results": [
+    {
+      "n_sites": 4,
+      "method": "fedavg",
+      "rounds": 2,
+      "global_rmse": 0.06685957983896575,
+      "worst_site_rmse": 0.0681011024865773,
+      "comm_mb_per_round": 0.381232,
+      "participation_rate": 1.0,
+      "clients_per_round_cap": 20,
+      "data_mode": "full_virtual_sites",
+      "sites_per_round": 4.0,
+      "total_comm_mb": 0.762464,
+      "feeder_comm_mb_per_round": 0.381232,
+      "rounds_to_converge": 2,
+      "client_training_seconds": 26.720514199929312,
+      "coordinator_seconds": 0.21274680003989488,
+      "inference_seconds": 0.09858890005853027,
+      "process_peak_memory_mb": 525.88544,
+      "seconds": 27.1
+    },
+    {
+      "n_sites": 4,
+      "method": "reliability_fedavg_event",
+      "rounds": 2,
+      "global_rmse": 0.06685917891651522,
+      "worst_site_rmse": 0.06810111393545364,
+      "comm_mb_per_round": 0.28593999999999997,
+      "participation_rate": 0.75,
+      "clients_per_round_cap": 20,
+      "data_mode": "full_virtual_sites",
+      "sites_per_round": 3.0,
+      "total_comm_mb": 0.57188,
+      "feeder_comm_mb_per_round": 0.28594,
+      "rounds_to_converge": 1,
+      "client_training_seconds": 5.825328100007027,
+      "coordinator_seconds": 0.28455640003085136,
+      "inference_seconds": 0.13117840001359582,
+      "process_peak_memory_mb": 525.88544,
+      "seconds": 6.3
+    },
+    {
+      "n_sites": 20,
+      "method": "fedavg",
+      "rounds": 2,
+      "global_rmse": 0.06804791008080817,
+      "worst_site_rmse": 0.07274262798307637,
+      "comm_mb_per_round": 1.90616,
+      "participation_rate": 1.0,
+      "clients_per_round_cap": 20,
+      "data_mode": "full_virtual_sites",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 3.81232,
+      "feeder_comm_mb_per_round": 1.90616,
+      "rounds_to_converge": 2,
+      "client_training_seconds": 29.44768730015494,
+      "coordinator_seconds": 1.2543852999806404,
+      "inference_seconds": 0.486985299969092,
+      "process_peak_memory_mb": 984.633344,
+      "seconds": 31.4
+    },
+    {
+      "n_sites": 20,
+      "method": "reliability_fedavg_event",
+      "rounds": 2,
+      "global_rmse": 0.06802715322167577,
+      "worst_site_rmse": 0.07272127540209178,
+      "comm_mb_per_round": 1.286762,
+      "participation_rate": 0.675,
+      "clients_per_round_cap": 20,
+      "data_mode": "full_virtual_sites",
+      "sites_per_round": 13.5,
+      "total_comm_mb": 2.573524,
+      "feeder_comm_mb_per_round": 1.286762,
+      "rounds_to_converge": 1,
+      "client_training_seconds": 20.54116270004306,
+      "coordinator_seconds": 0.9840090000070632,
+      "inference_seconds": 0.3496817999985069,
+      "process_peak_memory_mb": 984.633344,
+      "seconds": 22.0
+    }
+  ]
+}
