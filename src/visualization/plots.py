@@ -478,10 +478,10 @@ def plot_scaling(out):
     for ax in axes:
         _style(ax)
     axes[0].legend(fontsize=8.5)
-    fig.suptitle("14 · Scaling from 4 to 100 sites (scale simulation)", x=0.01, ha="left",
+    fig.suptitle("14 · Scaling from 4 to 500 logical clients", x=0.01, ha="left",
                  fontweight="bold")
     _save(fig, out, "14_comm_scaling.png",
-          "All sites eligible every round. Model update = 31 KB each way; heartbeat = 16 bytes.")
+          "Cap 20. Three model transfers + metadata. At 50+ clients, compact datasets repeat; accuracy is illustrative.")
 
 
 def make_all(out, cfg):

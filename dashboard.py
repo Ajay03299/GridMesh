@@ -60,7 +60,7 @@ def fig(w=6, h=3):
 def story(scen, kpi):
     """One plain-language sentence per scenario, built only from the measured numbers."""
     fa, ours, sp, r = kpi["fedavg"], kpi[OURS], kpi["smart_persistence"], kpi["reserve"]
-    ns, fx = r[f"nsigma_d{kpi['delta']}"], r[[p for p in r if p.startswith("fixed")][0]]
+    ns, fx = r[f"guarded_nsigma_d{kpi['delta']}"], r[[p for p in r if p.startswith("fixed")][0]]
     d_err = 100 * (ours["healthy_rmse"] / fa["healthy_rmse"] - 1)
     d_comm = 100 * (1 - ours["total_comm_mb"] / fa["total_comm_mb"])
     d_ens = 100 * (1 - ns["ens_pct_of_demand"] / fx["ens_pct_of_demand"])
@@ -79,9 +79,10 @@ def story(scen, kpi):
         return (f"Trained on January–September, tested on November–December, a season the model "
                 f"never saw: {verdict} ({sp['global_rmse']:.4f} vs {ours['global_rmse']:.4f}). "
                 f"This is the honest limit that motivates drift handling.")
-    return (f"All sites are healthy, so GridMesh matches standard federated learning "
+    ens_word = "less" if d_ens >= 0 else "more"
+    return (f"All sites are healthy. GridMesh and standard federated learning have errors "
             f"({ours['healthy_rmse']:.4f} vs {fa['healthy_rmse']:.4f}) while sending {d_comm:.0f}% "
-            f"less data, and its forecast-aware reserve leaves {d_ens:.0f}% less energy unserved "
+            f"less data, and its guarded forecast-aware reserve leaves {abs(d_ens):.0f}% {ens_word} energy unserved "
             f"than a fixed 20% reserve.")
 
 
@@ -165,7 +166,7 @@ with c2:
     st.pyplot(f, clear_figure=True)
 
 r, fa, ours = kpi["reserve"], kpi["fedavg"], kpi[OURS]
-ns = r[f"nsigma_d{kpi['delta']}"]
+ns = r[f"guarded_nsigma_d{kpi['delta']}"]
 fx = r[[p for p in r if p.startswith("fixed")][0]]
 s1, s2, s3, s4 = st.columns(4)
 s1.metric("Healthy-site RMSE", f"{ours['healthy_rmse']:.4f}",
@@ -181,7 +182,7 @@ s3.metric("Energy not served", f"{ns['ens_pct_of_demand']:.2f}%",
           delta_color="inverse")
 s3.caption("% of (synthetic) demand, whole test period")
 s4.metric("Intervals fully covered", f"{ns['availability_pct']:.1f}%")
-s4.caption(f"target {100 * (1 - kpi['delta']):.0f}% · fixed 20% covers {fx['availability_pct']:.1f}%")
+s4.caption(f"fixed 20% covers {fx['availability_pct']:.1f}% · margin target is separate from service availability")
 
 # ------------------------------------------------------------------ bottom
 b1, b2, b3 = st.columns(3)
@@ -232,3 +233,64 @@ with b3:
 
 with st.expander("Site table (latest round)"):
     st.dataframe(health[["capacity_mw", "trust", "quality", "quarantined", "state"]].round(3))
+
+st.subheader("Operator warnings")
+safety = kpi.get("safety", {})
+c1, c2, c3 = st.columns(3)
+c1.metric("Rejected updates", safety.get("rejected_updates", 0))
+c2.metric("Training fallback rounds", safety.get("fallback_rounds", 0))
+c3.metric("Model rollbacks", safety.get("rollback_rounds", 0))
+st.caption("Historical simulation replay. Each forecast issues 30 minutes before its target. "
+           "These indicators describe the simulation, rather than a live SCADA connection.")
+if "forecast_age_minutes" in today:
+    st.write(f"Forecast age at issue time: {now.forecast_age_minutes:.0f} minutes. "
+             f"Margin mode: {now.margin_source.replace('_', ' ')}.")
+if now.planned_gap_mw > 1e-9:
+    st.warning(f"Available backup cannot cover the planned requirement: {now.planned_gap_mw:.2f} MW gap.")
+if "calibration_warning" in today and pd.notna(now.calibration_warning) and now.calibration_warning:
+    st.warning(f"Conservative reserve floor active: {now.calibration_warning.replace('_', ' ')}.")
+if "rolling_coverage" in today:
+    st.write(f"Past margin coverage: {now.rolling_coverage:.1%} with "
+             f"{int(now.calibration_samples)} usable samples. "
+             f"Calibration age: {now.calibration_age_minutes:.0f} minutes.")
+if "rejection_reason" in cl:
+    with st.expander("Update decisions and reasons"):
+        decisions = cl[(cl.rejected) | (cl.quarantined) | (cl.drift)]
+        st.dataframe(decisions[["round", "site", "trust", "quarantine_reason",
+                                "rejection_reason", "drift"]], hide_index=True)
+
+with st.expander("Model, reliability and scale evidence"):
+    tabs = st.tabs(["Model choice", "Reliability", "Scale", "Reserve outcomes"])
+    def evidence(filename):
+        path = Path("outputs/tables") / filename
+        return pd.read_csv(path) if path.exists() else None
+    with tabs[0]:
+        frame = evidence("common_summary.csv")
+        if frame is not None:
+            st.caption("Five paired seeds. Lower daytime RMSE is better. Pooled methods require raw-data pooling.")
+            st.bar_chart(frame.set_index("method")[["rmse_mean", "worst_site_rmse"]])
+            st.dataframe(frame.round(4), hide_index=True)
+        else:
+            st.info("Run python run_common_comparison.py to generate model evidence.")
+    with tabs[1]:
+        frame = evidence("reliability_scorecard.csv")
+        if frame is not None:
+            st.dataframe(frame.round(4), hide_index=True)
+        else:
+            st.info("Run python run_reliability_stress.py to generate the scorecard.")
+    with tabs[2]:
+        frame = evidence("comm_scaling.csv")
+        if frame is not None:
+            st.caption("At 50–500 sites, repeated reference datasets test protocol traffic and runtime. "
+                       "They do not establish geographic forecasting generalization. "
+                       "Peak memory is cumulative for this process.")
+            st.line_chart(frame.pivot(index="n_sites", columns="method", values="comm_mb_per_round"))
+            st.line_chart(frame.pivot(index="n_sites", columns="method", values="seconds"))
+            st.dataframe(frame.round(4), hide_index=True)
+    with tabs[3]:
+        frame = evidence("common_reserve_detail.csv")
+        if frame is not None:
+            cols = ["reserve_energy_mwh", "shortfall_energy_mwh", "availability_pct", "total_cost"]
+            st.dataframe(frame.groupby(["forecast_method", "policy"])[cols].mean().round(2))
+            st.caption("Synthetic demand and assumed costs/asset limits. The daily LP is a retrospective "
+                       "schedule benchmark. Field deployment needs rolling planning with forecasts issued at that time.")

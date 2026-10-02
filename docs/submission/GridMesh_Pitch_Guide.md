@@ -19,16 +19,15 @@ limits.
 9. **Schneider positioning:** present GridMesh as a focused module beside existing platforms.
 10. **Closing ask:** advance to the prototype round and validate on measured feeder data.
 
-## The three numbers to remember
+## Current evidence
 
-At the 5% n-sigma setting, compared with a fixed 20%-of-demand uncertainty margin:
+Use `docs/PITCH_NUMBERS.md` and the final deck for current numbers. Older submission values
+are historical and must not be mixed with the enhanced benchmark. Explain local XGBoost versus
+smart persistence, reliability-aware versus standard FedAvg under faults, and forecast-to-reserve
+outcomes under the same resource limits. Use the accuracy change with communication savings.
 
-- **34.9% less scheduled backup**
-- **10.3% less unserved energy**
-- **17.2% lower assumed total cost**
-
-These are five-seed simulation means. Weather and irradiance are real; PV output is modelled;
-demand, sites, faults, capacities, limits and costs are simulated or assumed.
+Weather is real, PV is modelled, sites/faults are simulated, demand is synthetic, and asset/cost
+parameters are assumptions. Larger tests reuse compact datasets. Indian provenance is unverified.
 
 ## How to explain the reserve calculation
 
@@ -51,8 +50,9 @@ No. The contribution is the combined pipeline: reliability-weighted client updat
 participation, causal reserve margins and constrained scheduling evaluated on operational outcomes.
 
 **Why use MLP instead of GRU or LSTM?**  
-All three are implemented. In the current common-protocol screen, the compact MLP gave lower error,
-less communication and faster local training. We will repeat selection on measured pilot data.
+All three are implemented under one FL protocol. The five-seed table reports validation/test
+errors, runtimes and payload sizes. MLP remains the compact implementation. Any accuracy advantage
+from a recurrent model is reported, and pilot selection will use validation data.
 
 **Does raw data never leave a site?**  
 Raw histories remain local in the prototype. Model updates still require protection; secure
@@ -72,6 +72,21 @@ No. ₹46.50 per household per month is an illustrative software-service budget 
 excludes hardware and energy. A pilot must validate costs, benefit and willingness to pay.
 
 ## What not to claim
+
+The daily LP sees a day's sequence of rolling forecasts retrospectively. Its uncertainty monitor
+is causal, but live dispatch needs rolling planning. This is a schedule benchmark.
+
+## Five-minute delivery and demo
+
+Use 30 seconds for purpose, 30 for the operator journey, 40 for architecture, 45 for model evidence,
+40 for fault/fallback handling, 35 for scale, 50 for uncertainty/LP, and 30 for affordability and
+the prototype-round ask. Keep equations available for questions. The main story is that an operator
+gets a forecast, knows when to distrust it, and sees whether limited backup can cover the requirement.
+
+Build the replay with `python build_dashboard.py`, then launch `python -m streamlit run dashboard.py`.
+Show the faulty scenario, trust, update reasons, conservative margins and capacity warnings. Open
+the evidence tabs for model/scale comparisons. Do not train full experiments during the pitch.
+See `GridMesh_Judge_QA.md` for detailed answers.
 
 - Do not call the system field-deployed or utility-certified.
 - Do not call model updates private by default.

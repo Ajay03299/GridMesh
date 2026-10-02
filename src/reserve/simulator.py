@@ -31,11 +31,18 @@ def load_node(pred):
     df["time"] = pd.to_datetime(df["time"])
     df["forecast_mw"] = df["capacity_mw"] * df["forecast_pu"]
     df["actual_mw"] = df["capacity_mw"] * df["actual_pu"]
+    if "forecast_age_minutes" not in df:
+        df["forecast_age_minutes"] = 0
+    if "operator_attention" not in df:
+        df["operator_attention"] = False
     node = (df.groupby("time")
               .agg(split=("split", "first"), daytime=("daytime", "max"),
                    n_sites=("site", "nunique"), capacity_mw=("capacity_mw", "sum"),
                    forecast_mw=("forecast_mw", "sum"), actual_mw=("actual_mw", "sum"))
               .reset_index().sort_values("time").reset_index(drop=True))
+    status = df.groupby("time").agg(forecast_age_minutes=("forecast_age_minutes", "max"),
+                                    forecast_warning=("operator_attention", "max")).reset_index()
+    node = node.merge(status, on="time", how="left")
     # contiguous blocks (val days + test days of one month); a gap > 3 h starts a new block
     node["block"] = (node["time"].diff() > pd.Timedelta(hours=3)).cumsum()
     return node
@@ -162,6 +169,7 @@ def simulate(node, reserve_mw, rcfg, policy_name, delta=None):
 def run_policies(node, cfg, seed):
     """Fixed reserve + n-sigma at every delta in the sweep. Returns [(timeseries, summary)]."""
     from src.reserve.reserve_policy import empirical_reserve, fixed_reserve, nsigma_reserve
+    from src.reliability.calibration import monitor_margin
     rcfg, h = cfg["reserve"], cfg["features"]["horizon"]
     node = node.copy()
     node["demand_mw"] = synthetic_demand(node["time"], node["capacity_mw"].iloc[0],
@@ -174,7 +182,23 @@ def run_policies(node, cfg, seed):
                                    fallback=fallback)
         d, s = simulate(node, r, rcfg, f"nsigma_d{dlt}", delta=dlt)
         d["mu_e"], d["sigma_e"] = mu, sd
+        health = monitor_margin(node, r, dlt, cfg.get("safety", {}).get("calibration_window", 72),
+                                rcfg["min_periods"], h, fallback,
+                                cfg.get("safety", {}).get("calibration_tolerance", 0.03))
+        for col in ("rolling_coverage", "calibration_samples", "calibration_age_minutes",
+                    "calibration_warning"):
+            d[col] = health[col]
         runs.append((d, s))
+        guarded, gs = simulate(node, health["guarded_margin_mw"], rcfg,
+                               f"guarded_nsigma_d{dlt}", delta=dlt)
+        guarded["mu_e"], guarded["sigma_e"] = mu, sd
+        for col in health:
+            guarded[col] = health[col]
+        ev = (node.split == "test") & node.daytime
+        gs["margin_violation_rate"] = float(((node.forecast_mw - node.actual_mw) >
+                                             health.guarded_margin_mw)[ev].mean())
+        gs["calibration_alert_intervals"] = int((health.calibration_warning[ev] != "").sum())
+        runs.append((guarded, gs))
         r, q = empirical_reserve(node, dlt, rcfg["empirical_window"],
                                  rcfg["min_periods"], h, fallback=fallback)
         d, s = simulate(node, r, rcfg, f"empirical_d{dlt}", delta=dlt)

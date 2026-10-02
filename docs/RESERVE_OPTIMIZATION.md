@@ -21,7 +21,8 @@ m_t = \max\{\Phi^{-1}(1-\delta)\sigma_{e,t}-\mu_{e,t},0\}.
 This is an **uncertainty margin**, not the complete backup schedule. The Gaussian rule is inspired
 by Theorem 4.3 of the paper. Real weather errors need not be Gaussian, so GridMesh reports realized
 availability instead of promising the nominal target. An empirical rolling tail-quantile policy is
-implemented as a second, distribution-free benchmark.
+implemented as a second benchmark without a Gaussian shape assumption. Autocorrelation means
+it does not provide a distribution-free finite-sample coverage guarantee.
 
 ## 2. Expected demand gap
 
@@ -36,7 +37,7 @@ g_t=\max(D_t-G_t-\hat R_t,0).
 The backup requirement is therefore \(b_t=g_t+m_t\). This avoids the earlier conceptual error of
 sizing all reserve only from forecast error while ignoring demand.
 
-## 3. Constrained day-ahead schedule
+## 3. Constrained daily schedule benchmark
 
 For each day, the scheduler chooses committed backup \(q_t\) and a transparent planned gap \(u_t\):
 
@@ -56,6 +57,18 @@ scarce, \(c_{u,t}\) increases with the normalized requirement so the LP serves t
 intervals first; the priority strength is configurable. The planned-gap variable keeps infeasible
 operating conditions visible rather than silently clipping them. The prototype solves this linear
 program with SciPy HiGHS.
+
+The LP allocates the entire day's sequence of rolling forecasts retrospectively. Although each
+uncertainty estimate is causal, this is not a deployable day-ahead forecast plan. Operational use
+needs forecasts available before day start, or rolling optimization with remaining-energy state.
+
+## Calibration guard
+
+`src/reliability/calibration.py` monitors past issued margins at issue time, reports rolling
+coverage/sample count/calibration age, and uses `max(nominal margin, fixed 20% demand margin)`
+when history is insufficient, stale or below target. `guarded_nsigma_d0.05` is a separate policy
+from `nsigma_d0.05`. A wider margin may consume finite daily energy earlier and worsen some
+shortfalls. The evidence report publishes both policies without selecting one on test outcomes.
 
 ## 4. Evaluation boundary and assumptions
 

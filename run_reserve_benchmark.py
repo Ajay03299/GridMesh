@@ -6,6 +6,7 @@ Run the five forecast jobs first (seed 42 may use the default c4 tag):
     ...
 """
 from pathlib import Path
+import argparse
 
 import pandas as pd
 
@@ -14,8 +15,23 @@ from src.reserve.simulator import load_node, run_policies
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--common", action="store_true", help="aggregate the new common-protocol reserve results")
+    args = ap.parse_args()
     cfg = load_config("config.yaml")
     out = Path(cfg["paths"]["outputs"])
+    if args.common:
+        detail = pd.read_csv(out / "tables/common_reserve_detail.csv")
+        detail = detail[detail.forecast_method == "reliability_fedavg"].copy()
+        if detail.seed.nunique() != 5:
+            raise SystemExit("Common reserve comparison requires five completed seeds")
+        metrics = ["reserve_energy_mwh", "shortfall_energy_mwh", "availability_pct",
+                   "planned_capacity_gap_mwh", "total_cost"]
+        summary = detail.groupby("policy")[metrics].agg(["mean", "std"])
+        detail.to_csv(out / "tables/reserve_benchmark_common_detail.csv", index=False)
+        summary.to_csv(out / "tables/reserve_benchmark_common_5seed.csv")
+        print(summary.round(2).to_string())
+        return
     files = {42: out / "tables" / "pred_c4_blocked_monthly_reliability_fedavg.csv"}
     files.update({s: out / "tables" / f"pred_reserve_seed{s}_reliability_fedavg.csv"
                   for s in range(43, 47)})

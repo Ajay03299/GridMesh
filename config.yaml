@@ -64,6 +64,7 @@ virtual_sites:
 # ----------------------------------------------------------------- model
 model:
   architecture: mlp              # mlp | gru | lstm; shared by local/pooled/federated runs
+  cpu_threads: 1
   lookback: 6                    # must match features.lookback
   sequence_features: 6           # count of lagged variables, len(features.lagged)
   # residual_smart_persistence: network learns the CORRECTION to clear-sky persistence
@@ -75,6 +76,24 @@ model:
   epochs: 15                     # for centralized / local-only baselines
   weight_decay: 0.0
 
+# Strong tabular baselines. Both learn the correction to smart persistence and use
+# exactly the same time-ordered splits and features as the neural/FL experiments.
+tree_models:
+  decision_tree:
+    max_depth: 8
+    min_samples_leaf: 30
+  xgboost:
+    n_estimators: 600
+    learning_rate: 0.03
+    max_depth: 6
+    min_child_weight: 5
+    subsample: 0.80
+    colsample_bytree: 0.80
+    reg_alpha: 0.0
+    reg_lambda: 1.0
+    early_stopping_rounds: 40
+    n_jobs: 4
+
 paths:
   outputs: outputs
 
@@ -84,6 +103,8 @@ federated:
   local_epochs: 1
   client_fraction: 1.0           # share of clients sampled per round (e.g. 0.2 for 100 clients)
   min_clients: 2                 # a round with fewer reporting clients keeps the old model
+  max_clients_per_round: null    # cap sampled clients at scale; null = no cap
+  neighbourhood_size: 25
   dropout_rate: 0.0              # probability a selected client silently drops out
   select_best: true              # keep the global model with the best client-reported val error
 
@@ -94,6 +115,18 @@ reliability:
   trust_ema: 0.5                 # lambda: memory of previous trust
   quarantine_below: 0.2          # trust below this -> excluded from aggregation this round
   use_data_quality: true
+
+# Server-side guardrails. These protect availability; they do not claim Byzantine security.
+safety:
+  max_update_norm_ratio: 8.0     # reject an update far larger than the peer median norm
+  rollback_val_ratio: 1.35       # keep the last trusted model after a severe validation jump
+  max_site_validation_rmse: 0.25
+  max_validation_bias: 0.10
+  max_baseline_rmse_ratio: 2.0
+  baseline_rmse_floor: 0.10
+  calibration_window: 72
+  calibration_tolerance: 0.03    # warn if empirical shortfall rate misses delta by >3 points
+  fallback_chain: [last_trusted_model, local_model, smart_persistence]
 
 # Event-aware participation (communication-efficient scaling)
 event_aware:

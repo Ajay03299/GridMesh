@@ -12,9 +12,9 @@ updates, and converts uncertainty into a resource-constrained feeder backup sche
 | Criterion | What GridMesh demonstrates | Evidence in the repository |
 |---|---|---|
 | Relevance | Directly addresses renewable intermittency and local grid reliability | Forecast-to-reserve pipeline and one-node scheduler |
-| Impact | Supports a 4-to-100-site simulation and measured multi-site input path | `run_scale_test.py`, `audit.py`, configuration-driven clients |
-| Innovation | Reliability-aware aggregation + event-aware participation + causal uncertainty margins + constrained scheduling | `src/reliability`, `src/federated`, `src/reserve` |
-| Complexity | End-to-end data, three model families, FL, fault injection, drift logic, linear optimization, evaluation, dashboard | Source tree and 24 automated checks |
+| Impact | 4-to-500 logical-client scale evidence and a measured multi-site adapter | `run_scaling.py`, `audit.py`; repeated-reference limits disclosed |
+| Innovation | Model screening, trust, event sampling, hierarchy, fallback/rollback, causal margin health and constrained scheduling | `src/models`, `src/reliability`, `src/federated`, `src/reserve` |
+| Complexity | Working data-to-forecast-to-reserve pipeline with failure handling and operator replay | Source tree and 36 automated checks |
 | Implementation | Reproducible commands generate tables, plots, metrics, and dashboard data | `run_experiments.py`, `build_dashboard.py`, `dashboard.py` |
 | Clarity | Dashboard decomposes each action into forecast, demand, expected gap, uncertainty, and backup | Streamlit operator view |
 
@@ -33,11 +33,39 @@ updates, and converts uncertainty into a resource-constrained feeder backup sche
 
 GridMesh is not a replacement for EcoStruxure DERMS, Microgrid Advisor, or Microgrid Operation.
 Those platforms provide broader production orchestration, monitoring, and lifecycle capabilities.
-GridMesh is a complementary, research-stage module for a narrower gap: privacy-preserving
+GridMesh is a complementary, research-stage module for a narrower gap: privacy-conscious
 cross-owner renewable forecasting, reliability scoring of site updates, and transparent
 forecast-to-reserve recommendations for smaller portfolios. A mature version could publish
 forecasts, confidence, and recommended flexibility through standard interfaces into a utility or
 microgrid management platform.
+
+Schneider's public descriptions already overlap with forecasting and optimization. We do not
+claim Schneider lacks XGBoost, FL, hierarchy or equivalent internal capabilities. Public sources:
+[utility solutions](https://www.se.com/ww/en/work/solutions/electric-utilities/),
+[Microgrid Advisor](https://www.se.com/us/en/work/products/explore/ecostruxure-microgrid-advisor/),
+[Microgrid Operation](https://www.se.com/us/en/product-range/65897-ecostruxure-microgrid-operation/),
+[DERMS](https://www.se.com/us/en/product-range/89571422-ecostruxure-derms/).
+Future integration requires measured-data validation, interfaces, security review and approval.
+
+## Affordability and community operations
+
+The proposed owner is a community operator/ESCO with a trained local operator and DISCOM escalation.
+The shared software-service hypothesis is INR4,650/month, or INR46.50 at 100 paying households.
+Hardware, metering/gateways, installation, reserve energy, grid bills and finance require separate
+funding. At 50 households, the same service budget is INR93. No Schneider price comparison or
+proven cash saving is asserted. A pilot must test total costs, benefits and willingness to pay.
+
+## Strong submission, with evidence boundaries
+
+The mentor's approximate 75% prediction / 25% single-node reserve allocation remains the scope.
+The operator journey precedes the equations in the deck. The key technical question remains
+whether better forecasts improve feasible reserve outcomes under limited resources. Source of
+truth is the generated current evidence report. Model choice uses validation, not test reserve
+outcomes. Failed reliability targets and adverse guarded-policy outcomes stay visible.
+
+The current daily LP is a retrospective schedule benchmark. Real-time rolling dispatch, Indian
+data provenance, measured feeder demand, geographic generalization and verified emissions/curtailment
+effects are pilot milestones. A credible proposal cannot guarantee selection or winning.
 
 ## Demo story
 

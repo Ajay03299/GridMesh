@@ -25,17 +25,23 @@ class ReliabilityAwareFedAvg:
         r_now = instant_reliability(errors, self.rcfg["error_tolerance"],
                                     self.rcfg["error_sharpness"])
         self.trust = update_trust(self.trust, r_now, self.rcfg["trust_ema"])
-        raw, quarantined = {}, []
+        raw, quarantined, reasons = {}, [], {}
         for u in updates:
             t = self.trust[u.name]
             q = u.quality if self.rcfg["use_data_quality"] else 1.0
             if t < self.rcfg["quarantine_below"]:
                 quarantined.append(u.name)
+                reasons[u.name] = "trust_below_threshold"
                 raw[u.name] = 0.0
             else:
                 raw[u.name] = u.n_samples * t * q
         total = sum(raw.values())
-        if total == 0:                      # everyone quarantined -> fall back to FedAvg
-            total, raw = sum(u.n_samples for u in updates), {u.name: u.n_samples for u in updates}
-        info = {"trust": dict(self.trust), "reliability_now": r_now, "quarantined": quarantined}
+        fallback = None
+        if total == 0:
+            # Never silently put a quarantined update back into the model.
+            total = 1.0
+            fallback = "last_trusted_model"
+        info = {"trust": dict(self.trust), "reliability_now": r_now,
+                "quarantined": quarantined, "quarantine_reasons": reasons,
+                "fallback": fallback}
         return {k: v / total for k, v in raw.items()}, info

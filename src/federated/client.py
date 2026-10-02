@@ -1,10 +1,12 @@
 """A federated client = one renewable site. Raw data never leaves this object;
 only model parameters and a few summary numbers are returned to the server."""
 from dataclasses import dataclass
+import numpy as np
 
 from src.models.forecasting_model import (build_model, get_params, mse_on, set_params,
                                           train_epochs)
 from src.reliability.trust import data_quality
+from src.models.forecasting_model import predict
 
 
 @dataclass
@@ -42,3 +44,14 @@ class FLClient:
                      self.cfg["model"], self.seed + 1000 * round_idx + self.data.params.site_id)
         return Update(self.name, get_params(self.model), len(d.train.y),
                       e_global, mse_on(self.model, d.val), quality)
+
+    def validation_report(self, global_params):
+        """Only these scalars cross the site boundary for acceptance gates."""
+        set_params(self.model, global_params)
+        val = self.current.val
+        pred = predict(self.model, val)
+        e = pred[val.daytime] - val.y[val.daytime]
+        baseline = val.base[val.daytime] - val.y[val.daytime]
+        return {"mse": float(np.mean(e ** 2)), "bias": float(np.mean(e)),
+                "baseline_mse": float(np.mean(baseline ** 2)),
+                "valid": bool(np.isfinite(pred).all())}
