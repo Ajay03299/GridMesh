@@ -35,6 +35,12 @@ Quick runs save distinct tables. Five-seed recurrent
 models and stress matrices can take tens of minutes or longer on a laptop. Plan full runs before
 the demo. The dashboard replays precomputed results and needs no live training.
 
+The dashboard opens in dark mode. Use **Dark mode** in the sidebar to switch to light
+mode. Charts, evidence plots, table cells and operator panels follow the selection;
+it persists across scenario changes in the current session and does not change results.
+`python check_dashboard.py` checks all four scenarios in both themes and verifies
+that switching themes leaves the displayed metrics unchanged.
+
 The supplied weather CSV has no verified year/location metadata. 2019 is assumed. Measured Indian
 PV/load validation is a next milestone. The daily reserve LP is a retrospective benchmark,
 while its uncertainty and monitoring are causal. A live pilot requires rolling planning.

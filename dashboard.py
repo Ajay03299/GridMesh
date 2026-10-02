@@ -15,15 +15,20 @@ import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from src.data.adapter import load_config  # noqa: E402
-from src.visualization.plots import (AXIS, FAULT, GRID, HEALTHY_GREYS, INK, METHOD,  # noqa: E402
-                                     MUTED, SURFACE, _style)
+from src.visualization.dashboard_theme import (apply_theme, evidence_chart, palette,
+                                               render_figure, styled_table)  # noqa: E402
+from src.visualization.plots import _style  # noqa: E402
 
 OURS = "reliability_fedavg_event"
 LABELS = {"normal": "NORMAL", "faulty": "FAULTY CLIENT", "dropout": "CLIENT DROPOUT",
           "shift": "WEATHER / REGIME SHIFT"}
-BLUE, ORANGE = METHOD["reliability_fedavg"][0], METHOD["fedavg"][0]
-
 st.set_page_config(page_title="GridMesh", layout="wide")
+dark_mode = st.sidebar.toggle("Dark mode", value=True, key="dark_mode")
+colors = palette(dark_mode)
+apply_theme(colors, dark_mode)
+INK, MUTED, GRID, AXIS = colors["ink"], colors["muted"], colors["grid"], colors["grid"]
+SURFACE, FAULT = colors["surface"], colors["fault"]
+BLUE, ORANGE, HEALTHY_GREYS = colors["blue"], colors["orange"], colors["healthy"]
 cfg = load_config()
 ROOT = Path(cfg["paths"]["outputs"]) / "dashboard"
 if not (ROOT / "normal" / "kpi.json").exists():
@@ -147,7 +152,7 @@ with c1:
     ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%H:%M"))
     _style(ax)
     ax.legend(fontsize=7, loc="upper left")
-    st.pyplot(f, clear_figure=True)
+    render_figure(f, colors)
 with c2:
     f, ax = fig()
     ax.fill_between(x, 0, today.deficit_mw, color=GRID, step="mid", label="realised net deficit")
@@ -165,7 +170,7 @@ with c2:
     ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%H:%M"))
     _style(ax)
     ax.legend(fontsize=7, loc="upper left")
-    st.pyplot(f, clear_figure=True)
+    render_figure(f, colors)
 
 r, fa, ours = kpi["reserve"], kpi["fedavg"], kpi[OURS]
 ns = r[f"guarded_nsigma_d{kpi['delta']}"]
@@ -200,7 +205,7 @@ with b1:
     ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
     _style(ax)
     ax.legend(fontsize=7, ncol=2)
-    st.pyplot(f, clear_figure=True)
+    render_figure(f, colors)
 with b2:
     f, ax = fig(5, 3.2)
     piv = cl.pivot(index="site", columns="round", values="status").replace(
@@ -215,7 +220,7 @@ with b2:
     for s in ax.spines.values():
         s.set_visible(False)
     ax.set(xlabel="round", title="Participation: trained / skipped / dropped, o = drift")
-    st.pyplot(f, clear_figure=True)
+    render_figure(f, colors)
 with b3:
     f, axes = plt.subplots(1, 2, figsize=(5, 3.2), sharey=True)
     for ax, d, ttl in [(axes[0], cl_fa, "FedAvg"), (axes[1], cl_rel, "Reliability-aware")]:
@@ -231,10 +236,10 @@ with b3:
     axes[1].legend(fontsize=7)
     f.suptitle("Aggregation weights (without event-aware skipping)", fontsize=10, fontweight="bold", x=0.02, ha="left")
     f.tight_layout()
-    st.pyplot(f, clear_figure=True)
+    render_figure(f, colors)
 
 with st.expander("Site table (latest round)"):
-    st.dataframe(health[["capacity_mw", "trust", "quality", "quarantined", "state"]].round(3))
+    st.dataframe(styled_table(health[["capacity_mw", "trust", "quality", "quarantined", "state"]].round(3), colors))
 
 st.subheader("Operator warnings")
 safety = kpi.get("safety", {})
@@ -258,8 +263,8 @@ if "rolling_coverage" in today:
 if "rejection_reason" in cl:
     with st.expander("Update decisions and reasons"):
         decisions = cl[(cl.rejected) | (cl.quarantined) | (cl.drift)]
-        st.dataframe(decisions[["round", "site", "trust", "quarantine_reason",
-                                "rejection_reason", "drift"]], hide_index=True)
+        st.dataframe(styled_table(decisions[["round", "site", "trust", "quarantine_reason",
+                                "rejection_reason", "drift"]], colors), hide_index=True)
 
 with st.expander("Model, reliability and scale evidence"):
     tabs = st.tabs(["Model choice", "Reliability", "Scale", "Reserve outcomes"])
@@ -270,15 +275,15 @@ with st.expander("Model, reliability and scale evidence"):
         frame = evidence("common_summary.csv")
         if frame is not None:
             st.caption("Five paired seeds. Lower daytime RMSE is better. Pooled methods require raw-data pooling.")
-            st.bar_chart(frame.set_index("method")[["rmse_mean"]])
+            evidence_chart(frame, "method:N", "rmse_mean:Q", colors, kind="bar")
             st.caption("Worst-site error appears separately in the table; it is not added to global RMSE.")
-            st.dataframe(frame.round(4), hide_index=True)
+            st.dataframe(styled_table(frame.round(4), colors), hide_index=True)
         else:
             st.info("Run python run_common_comparison.py to generate model evidence.")
     with tabs[1]:
         frame = evidence("reliability_scorecard.csv")
         if frame is not None:
-            st.dataframe(frame.round(4), hide_index=True)
+            st.dataframe(styled_table(frame.round(4), colors), hide_index=True)
         else:
             st.info("Run python run_reliability_stress.py to generate the scorecard.")
     with tabs[2]:
@@ -287,13 +292,13 @@ with st.expander("Model, reliability and scale evidence"):
             st.caption("At 50–500 sites, repeated reference datasets test protocol traffic and runtime. "
                        "They do not establish geographic forecasting generalization. "
                        "Peak memory is cumulative for this process.")
-            st.line_chart(frame.pivot(index="n_sites", columns="method", values="comm_mb_per_round"))
-            st.line_chart(frame.pivot(index="n_sites", columns="method", values="seconds"))
-            st.dataframe(frame.round(4), hide_index=True)
+            evidence_chart(frame, "n_sites:Q", "comm_mb_per_round:Q", colors, series="method:N")
+            evidence_chart(frame, "n_sites:Q", "seconds:Q", colors, series="method:N")
+            st.dataframe(styled_table(frame.round(4), colors), hide_index=True)
     with tabs[3]:
         frame = evidence("common_reserve_detail.csv")
         if frame is not None:
             cols = ["reserve_energy_mwh", "shortfall_energy_mwh", "availability_pct", "total_cost"]
-            st.dataframe(frame.groupby(["forecast_method", "policy"])[cols].mean().round(2))
+            st.dataframe(styled_table(frame.groupby(["forecast_method", "policy"])[cols].mean().round(2), colors))
             st.caption("Synthetic demand and assumed costs/asset limits. The daily LP is a retrospective "
                        "schedule benchmark. Field deployment needs rolling planning with forecasts issued at that time.")
