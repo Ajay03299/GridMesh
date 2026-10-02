@@ -1,7 +1,7 @@
 """Paired protocol stress tests, including an unavailable neighbourhood."""
 import argparse
 import copy
-import json
+from src.evaluation.serialization import dumps
 from pathlib import Path
 
 import pandas as pd
@@ -48,7 +48,7 @@ def main():
         print(f"finished {scenario}", flush=True)
     out = Path(base["paths"]["outputs"])
     pd.DataFrame(rows).to_csv(out / "tables/scale_stress.csv", index=False)
-    (out / "metrics/scale_stress.json").write_text(json.dumps(
+    (out / "metrics/scale_stress.json").write_text(dumps(
         {"args": vars(args), "config": base, "results": rows}, indent=2))
     print(pd.DataFrame(rows).round(4).to_string(index=False))
 

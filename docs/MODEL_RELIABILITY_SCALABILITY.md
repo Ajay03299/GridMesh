@@ -23,6 +23,9 @@ PV uses a simplified horizontal-plane irradiance/temperature model, rather than 
 generation. The four benchmark sites vary sensor quality, meter noise, PV configuration and
 training-history length. They all share the same weather. Five seeds vary these simulated
 parameters and training randomness, not the weather locations.
+Fault comparisons use clean test features/targets to isolate damage from corrupted training
+and client-validation histories. Runtime stale/invalid inputs have separate direct guard tests.
+These experiments do not constitute an end-to-end live faulty-sensor replay.
 
 Each forecast looks 30 minutes ahead using one hour of lagged PV/weather. Only astronomical,
 calendar and clear-sky covariates can come from the target timestamp. The blocked-monthly split

@@ -1,6 +1,6 @@
 """Common-cloud and scarce-asset tests on one fixed learned forecast."""
 import copy
-import json
+from src.evaluation.serialization import dumps
 from pathlib import Path
 
 import numpy as np
@@ -47,7 +47,7 @@ def main():
     out = Path(cfg["paths"]["outputs"])
     pd.DataFrame(rows).to_csv(out / "tables/operational_stress.csv", index=False)
     pd.DataFrame(forecast_rows).to_csv(out / "tables/forecast_fallback_stress.csv", index=False)
-    (out / "metrics/operational_stress.json").write_text(json.dumps(
+    (out / "metrics/operational_stress.json").write_text(dumps(
         {"config": cfg, "seed": cfg["seed"], "results": rows, "fallbacks": forecast_rows}, indent=2))
     print(pd.DataFrame(rows)[["scenario", "policy", "shortfall_energy_mwh", "planned_capacity_gap_mwh"]])
 

@@ -30,6 +30,7 @@ Remove `--quick` for the five-seed tree, 12-method and reliability runs. Then ru
 `python run_scale_stress.py`, `python run_operational_stress.py`, `python build_evidence_report.py`
 and `python run_reserve_benchmark.py --common`. Run `python run_reliability_stress.py --scenarios sensor_recovery`
 before generating the evidence report, and `python check_dashboard.py` after the dashboard build.
+Run `python build_evidence_plots.py` after all full comparisons to refresh the enhanced figures.
 Quick runs save distinct tables. Five-seed recurrent
 models and stress matrices can take tens of minutes or longer on a laptop. Plan full runs before
 the demo. The dashboard replays precomputed results and needs no live training.

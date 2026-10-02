@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from src.evaluation.serialization import dumps
 
 
 OUT = Path("outputs")
@@ -49,6 +50,9 @@ def refresh_communication(detail, transfers=3):
 
 
 def main():
+    audit = json.loads((OUT / "metrics/audit_checks.json").read_text(encoding="utf-8"))
+    if audit["passed"] != audit["total"]:
+        raise RuntimeError("The complete audit must pass before publishing")
     detail = pd.read_csv(OUT / "tables/common_detail.csv")
     if detail.seed.nunique() != 5 or len(detail) != 60:
         raise RuntimeError("Wait for all 12 methods and five seeds before publishing the report")
@@ -61,11 +65,19 @@ def main():
     run_record = json.loads(run_path.read_text())
     run_record["results"] = detail.to_dict("records")
     run_record["communication_accounting"] = "3 model transfers + 64-byte scalars + heartbeats"
-    run_path.write_text(json.dumps(run_record, indent=2, default=str), encoding="utf-8")
+    run_path.write_text(dumps(run_record, indent=2, default=str), encoding="utf-8")
     models = summary.set_index("method")
     stress = pd.read_csv(OUT / "tables/reliability_stress_detail.csv")
     if stress.seed.nunique() != 5 or len(stress) != 120:
         raise RuntimeError("Reliability evidence requires all five paired seeds")
+    if "rounds" not in stress:
+        stress["rounds"] = 20  # Published full matrix freezes twenty rounds.
+    if "communication_model_transfers" not in stress:
+        stress["communication_model_transfers"] = 2
+    extra_transfers = 3 - stress.communication_model_transfers
+    parameter_bytes = float(models.loc["reliability_fedavg", "model_bytes"])
+    stress["comm_mb"] += extra_transfers * parameter_bytes * stress.participation_rate * 4 * stress["rounds"] / 1e6
+    stress["communication_model_transfers"] = 3
     recovery_path = OUT / "tables/reliability_sensor_recovery_stress_detail.csv"
     if not recovery_path.exists():
         raise RuntimeError("Run the five-seed sensor_recovery measurement before publishing")
@@ -77,6 +89,11 @@ def main():
     stress = stress.merge(recovery[["seed", "scenario", "method", "quarantine_weight_recovery_rounds"]],
                           on=["seed", "scenario", "method"], how="left", validate="one_to_one")
     stress.to_csv(OUT / "tables/reliability_stress_detail.csv", index=False)
+    stress_run_path = OUT / "metrics/reliability.json"
+    stress_run = json.loads(stress_run_path.read_text(encoding="utf-8"))
+    stress_run["results"] = stress.to_dict("records")
+    stress_run["communication_accounting"] = "3 transfers recounted from observed participation; forecasts unchanged"
+    stress_run_path.write_text(dumps(stress_run, indent=2, default=str), encoding="utf-8")
     scale = pd.read_csv(OUT / "tables/comm_scaling.csv")
     if set(scale.n_sites) != {4, 20, 50, 100, 250, 500}:
         raise RuntimeError("Scale evidence is incomplete")
@@ -104,10 +121,14 @@ def main():
     for scenario in ("fault10", "fault20"):
         a = tests[(tests.scenario == scenario) & (tests.method == "fedavg")].iloc[0]
         b = tests[(tests.scenario == scenario) & (tests.method == "reliability_fedavg")].iloc[0]
-        change = 100 * (b.healthy_rmse / a.healthy_rmse - 1)
+        clean_a = tests[(tests.scenario == "healthy") & (tests.method == "fedavg")].iloc[0]
+        clean_b = tests[(tests.scenario == "healthy") & (tests.method == "reliability_fedavg")].iloc[0]
+        damage_a = 100 * (a.healthy_rmse / clean_a.healthy_rmse - 1)
+        damage_b = 100 * (b.healthy_rmse / clean_b.healthy_rmse - 1)
+        change = damage_b - damage_a
         targets.append({"target": f"{scenario}: less healthy-site damage than FedAvg",
                         "method": "reliability_fedavg", "observed": change,
-                        "unit": "relative percent", "passed": bool(change < 0)})
+                        "unit": "damage difference, percentage points", "passed": bool(change < 0)})
     target_frame = pd.DataFrame(targets)
     target_frame.to_csv(OUT / "tables/acceptance_targets.csv", index=False)
     selected = detail.groupby("method").validation_rmse.mean().sort_values()
@@ -141,7 +162,7 @@ def main():
                "reserve_rows": clean_records(rs), "scale_rows": clean_records(scale),
                "stress_rows": clean_records(tr), "operational_rows": clean_records(operational),
                "acceptance_targets": targets,
-               "audit_checks": 36,
+               "audit_checks": audit["passed"],
                "scope": "real weather; modeled PV; simulated sites/faults; synthetic demand; assumed costs"}
     (OUT / "metrics/enhancement_evidence.json").write_text(
         json.dumps(numbers, indent=2, default=str, allow_nan=False), encoding="utf-8")
@@ -171,6 +192,8 @@ For two severe stale-sensor sites, reliability-aware FL improves healthy-site RM
 {stale_gain:.1f}% relative to FedAvg in this paired experiment. Results depend on the fault type
 and baseline. No universal fault-tolerance claim follows. Recovery probes admit healed clients
 after healthy reports. Fault recovery and dropout runs also retain all healthy evaluation sites.
+Clean test features/targets isolate training/update damage. Direct runtime input-failure tests
+are separate, rather than a claim of an end-to-end live sensor-fault replay.
 Recovery means the first positive aggregation weight after the sensor heals at round 10. It
 does not mean forecast-error recovery or wall-clock availability. An absent recovery is NaN,
 rather than a fabricated success. The separate five-seed replay uses the same frozen settings.
@@ -225,6 +248,9 @@ violation rate is a forecast-error metric, separate from service availability.
 Failed targets stay visible. In particular, additional event skipping can worsen learning with
 few clients and heavy dropout. A future availability-aware sampling policy needs validation on
 new data. Insufficient assets also remain a visible capacity gap instead of a false success.
+Fault damage normalizes each method to its own healthy run. The reported difference is
+trust-aware damage minus FedAvg damage, so negative values indicate less damage. These
+100-client fault targets use one paired seed, unlike the five-seed four-site stress matrix.
 
 ## Reproduction and current scope
 
@@ -271,6 +297,11 @@ The prototype uses real weather, modelled PV, simulated sites/faults, synthetic 
         raise RuntimeError(f"Overview word count {word_count} exceeds submission boundary")
     (DOC / "submission/GridMesh_Submission_Overview.txt").write_text(overview, encoding="utf-8")
     print(f"Generated evidence, pitch numbers and {word_count}-word overview")
+    # Normalize files from jobs that started before strict JSON serialization was added.
+    for path in (OUT / "metrics").glob("*.json"):
+        if path.stem.startswith(("common", "tree_", "reliability", "comm_scaling", "scale_stress", "operational_stress")):
+            record = json.loads(path.read_text(encoding="utf-8"))
+            path.write_text(dumps(record, indent=2, default=str), encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ Full: five paired seeds, config training budgets. Model ranking uses validation 
 """
 import argparse
 import copy
-import json
+from src.evaluation.serialization import dumps
 from pathlib import Path
 import time
 
@@ -117,7 +117,7 @@ def main():
                    "planned_capacity_gap_mwh", "grid_import_energy_mwh", "total_cost"]
         r.groupby(["forecast_method", "policy"])[metrics].agg(["mean", "std"]).to_csv(
             out / f"tables/{prefix}_reserve_summary.csv")
-    (out / f"metrics/{prefix}.json").write_text(json.dumps(
+    (out / f"metrics/{prefix}.json").write_text(dumps(
         {"quick": args.quick, "seeds": seeds, "config": cfg, "split": split,
          "methods": args.methods.split(","), "results": rows}, indent=2, default=str))
     print(summary.round(4).to_string(index=False))

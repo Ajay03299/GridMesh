@@ -102,10 +102,10 @@ def main():
     (out / "tables").mkdir(parents=True, exist_ok=True)
     filename = "comm_scaling_quick.csv" if args.quick else "comm_scaling.csv"
     pd.DataFrame(rows).to_csv(out / "tables" / filename, index=False)
-    import json
+    from src.evaluation.serialization import dumps
     (out / "metrics").mkdir(parents=True, exist_ok=True)
     (out / "metrics" / filename.replace(".csv", ".json")).write_text(
-        json.dumps({"args": vars(args), "config": cfg, "results": rows}, indent=2))
+        dumps({"args": vars(args), "config": cfg, "results": rows}, indent=2))
     from src.visualization.plots import plot_scaling
     if not args.quick:
         plot_scaling(out)

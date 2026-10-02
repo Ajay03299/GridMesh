@@ -91,9 +91,9 @@ def main():
         participation=("participation_rate", "mean"), comm_mb=("comm_mb", "mean"),
         fallback_rounds=("fallback_rounds", "mean"))
     summary.to_csv(out / f"tables/{prefix}_scorecard.csv", index=False)
-    import json
+    from src.evaluation.serialization import dumps
     (out / "metrics").mkdir(parents=True, exist_ok=True)
-    (out / f"metrics/{prefix}.json").write_text(json.dumps({"quick": args.quick,
+    (out / f"metrics/{prefix}.json").write_text(dumps({"quick": args.quick,
         "seeds": seeds, "config": base, "scenarios": SCENARIOS, "results": rows}, indent=2))
     print("\n" + summary.round(4).to_string(index=False))
 

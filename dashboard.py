@@ -32,7 +32,7 @@ if not (ROOT / "normal" / "kpi.json").exists():
 
 
 @st.cache_data
-def load(name):
+def load(name, revision):
     d = ROOT / name
     node = pd.read_csv(d / "node.csv", parse_dates=["time"])
     return (node, pd.read_csv(d / f"clients_{OURS}.csv"), pd.read_csv(d / "clients_fedavg.csv"),
@@ -90,7 +90,9 @@ def story(scen, kpi):
 st.sidebar.title("GridMesh")
 st.sidebar.caption("Reliability-aware federated renewable forecasting")
 scen = st.sidebar.radio("Scenario", list(LABELS), format_func=LABELS.get)
-node, cl, cl_fa, cl_rel, sites, kpi = load(scen)
+replay_revision = tuple((ROOT / scen / filename).stat().st_mtime_ns for filename in
+                       ("kpi.json", "node.csv", f"clients_{OURS}.csv"))
+node, cl, cl_fa, cl_rel, sites, kpi = load(scen, replay_revision)
 day_df = node[node.daytime].copy()
 daily_err = day_df.assign(e=(day_df.actual_mw - day_df.forecast_mw).abs()).groupby(
     day_df.time.dt.date).e.sum()
@@ -268,7 +270,8 @@ with st.expander("Model, reliability and scale evidence"):
         frame = evidence("common_summary.csv")
         if frame is not None:
             st.caption("Five paired seeds. Lower daytime RMSE is better. Pooled methods require raw-data pooling.")
-            st.bar_chart(frame.set_index("method")[["rmse_mean", "worst_site_rmse"]])
+            st.bar_chart(frame.set_index("method")[["rmse_mean"]])
+            st.caption("Worst-site error appears separately in the table; it is not added to global RMSE.")
             st.dataframe(frame.round(4), hide_index=True)
         else:
             st.info("Run python run_common_comparison.py to generate model evidence.")
