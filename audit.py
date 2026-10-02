@@ -25,11 +25,16 @@ from src.evaluation.metrics import smart_persistence
 from src.federated.client_selection import select_clients
 from src.federated.fedavg import weighted_average
 from src.federated.reliability_aware import ReliabilityAwareFedAvg
-from src.federated.server import METADATA_BYTES, run_federated
+from src.federated.server import METADATA_BYTES, MODEL_TRANSFERS, run_federated
 from src.reliability.drift import DriftDetector
 from src.reserve.reserve_policy import empirical_reserve, nsigma_reserve
 from src.reserve.simulator import schedule_backup, simulate
 from src.models.forecasting_model import build_model
+from src.models.tree_models import build_decision_tree, build_xgboost, fit_tree, predict_tree
+from src.reliability.safety import (choose_fallback, screen_updates, should_rollback,
+                                    safe_forecast, validation_gate)
+from src.reliability.calibration import monitor_margin
+from src.federated.hierarchical import HierarchicalReliabilityFedAvg
 
 RESULTS = []
 
@@ -144,6 +149,39 @@ def _():
         assert tuple(out.shape) == (8,) and np.isfinite(out.detach().numpy()).all()
 
 
+@check("trees: decision tree fits residual target and returns bounded forecasts")
+def _():
+    c = CLIENTS[0]
+    model, _ = fit_tree(build_decision_tree(CFG, SEED), c.train, c.val)
+    pred = predict_tree(model, c.test)
+    assert len(pred) == len(c.test.y) and np.isfinite(pred).all()
+    assert pred.min() >= 0 and pred.max() <= 1
+
+
+@check("trees: residual target is exactly actual minus smart persistence")
+def _():
+    c = CLIENTS[0]
+    assert np.allclose(c.train.y_model, c.train.y - c.train.base)
+
+
+@check("XGBoost: deterministic residual forecasts, validation-only early stopping, bounded output")
+def _():
+    from dataclasses import replace
+    c = CLIENTS[0]
+    cfg = copy.deepcopy(CFG)
+    cfg["tree_models"]["xgboost"].update(n_estimators=20, early_stopping_rounds=5)
+    models = [fit_tree(build_xgboost(cfg, SEED), c.train, c.val)[0] for _ in range(2)]
+    a, b = [predict_tree(m, c.test) for m in models]
+    assert np.array_equal(a, b) and np.isfinite(a).all() and a.min() >= 0 and a.max() <= 1
+    assert np.allclose(a, np.clip(c.test.base + models[0].predict(c.test.X), 0, 1))
+    assert set(models[0].evals_result()) == {"validation_0"}
+    assert len(models[0].evals_result()["validation_0"]["rmse"]) <= 20
+    assert build_decision_tree(CFG, SEED).max_depth == 8
+    # Changing held-out targets cannot alter the fitted model or predictions.
+    changed = replace(c.test, y=np.ones_like(c.test.y))
+    assert np.array_equal(a, predict_tree(models[0], changed))
+
+
 @check("FedAvg: aggregation is the exact weighted average")
 def _():
     a, b = [np.ones((2, 2)), np.zeros(3)], [np.full((2, 2), 5.0), np.ones(3)]
@@ -190,6 +228,112 @@ def _():
     assert act == ["S3"]
 
 
+@check("client selection: max-clients cap bounds each round")
+def _():
+    names = [f"S{i}" for i in range(100)]
+    act, _, _ = select_clients(names, np.random.default_rng(1),
+                               {"client_fraction": 1.0, "dropout_rate": 0.0,
+                                "max_clients_per_round": 12})
+    assert len(act) == 12
+
+
+@check("safety: non-finite and extreme-norm updates are rejected with reasons")
+def _():
+    class U:
+        def __init__(s, name, value):
+            s.name, s.params = name, [np.array([value], dtype=float)]
+    accepted, rejected, _ = screen_updates(
+        [U("normal", 1), U("peer", 1.1), U("extreme", 100), U("nan", np.nan)],
+        [np.array([0.0])], 8.0)
+    assert {u.name for u in accepted} == {"normal", "peer"}
+    assert rejected == {"nan": "non_finite_update", "extreme": "excessive_update_norm"}
+
+
+@check("safety: deterministic fallback chain and validation rollback gate")
+def _():
+    assert choose_fallback(False, True).source == "local_model"
+    assert choose_fallback(False, False).source == "smart_persistence"
+    assert should_rollback(np.nan, 1.0, 1.3)[0]
+    assert should_rollback(1.5, 1.0, 1.3)[0]
+    assert not should_rollback(1.1, 1.0, 1.3)[0]
+
+
+@check("safety: real forecast fallback ordering, stale age and explicit failure")
+def _():
+    good, bad, base = np.array([0.4, 0.5]), np.array([np.nan, 0.5]), np.array([0.3, 0.4])
+    for last, local, expected in [(good, good, "last_trusted_model"),
+                                  (None, good, "local_model"),
+                                  (None, None, "smart_persistence")]:
+        p, record = safe_forecast(bad, last, local, base)
+        assert np.isfinite(p).all() and record["source"] == expected
+    _, record = safe_forecast(good, good, good, base, age_minutes=60)
+    assert record["source"] == "smart_persistence" and record["operator_attention"]
+    try:
+        safe_forecast(None, None, None, bad)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("invalid fallback must fail explicitly")
+
+
+@check("rollback: prediction, worst-site, bias and persistence gates give explicit reasons")
+def _():
+    healthy = {"valid": True, "mse": 0.001, "bias": 0.0, "baseline_mse": 0.001}
+    assert validation_gate([healthy], CFG["safety"])[0]
+    for change, reason in [({"valid": False}, "invalid_predictions"),
+                          ({"mse": 0.25}, "worst_site_validation"),
+                          ({"bias": 0.2}, "validation_bias"),
+                          ({"mse": 0.04}, "worse_than_smart_persistence")]:
+        assert validation_gate([{**healthy, **change}], CFG["safety"]) == (False, reason)
+
+
+@check("selection: quarantine exclusion, recovery probes and bounded drift priority")
+def _():
+    names = [f"S{i}" for i in range(20)]
+    fc = {"client_fraction": 1, "dropout_rate": 0, "max_clients_per_round": 5}
+    ec = {"stable_participation": 1}
+    rng = np.random.default_rng(0)
+    active, _, _ = select_clients(names, rng, fc, ec, drifting={"S19"}, round_idx=2,
+                                  quarantined={"S0"})
+    assert "S19" in active and "S0" not in active and len(active) == 5
+    fc["max_clients_per_round"] = 20
+    active, _, _ = select_clients(names, rng, fc, ec, round_idx=3, quarantined={"S0"})
+    assert "S0" in active
+
+
+@check("trust: quarantine recovers after healthy reports and all-quarantined weights stay zero")
+def _():
+    from types import SimpleNamespace
+    agg = ReliabilityAwareFedAvg(CFG["reliability"])
+    def us(error):
+        return [SimpleNamespace(name=n, n_samples=100, quality=1, e_global=e)
+                for n, e in [("A", 1), ("B", 1), ("C", error)]]
+    for _ in range(6):
+        weights, info = agg.weights(us(10))
+    assert "C" in info["quarantined"]
+    for _ in range(6):
+        weights, info = agg.weights(us(1))
+    assert weights["C"] > 0 and "C" not in info["quarantined"]
+    agg.trust = {"A": 0, "B": 0, "C": 0}
+    agg.rcfg = {**agg.rcfg, "trust_ema": 1.0}
+    weights, _ = agg.weights(us(1))
+    assert sum(weights.values()) == 0
+
+
+@check("hierarchy: composed weights equal two-stage parameter averaging")
+def _():
+    from types import SimpleNamespace
+    updates = [SimpleNamespace(name=n, n_samples=k, e_global=1.0,
+                               quality=1.0, params=[np.array([v])])
+               for n, k, v in [("A", 100, 1), ("B", 300, 5), ("C", 200, 7), ("D", 200, 9)]]
+    agg = HierarchicalReliabilityFedAvg(CFG["reliability"], [u.name for u in updates], 2)
+    weights, info = agg.weights(updates)
+    assert abs(sum(weights.values()) - 1) < 1e-9
+    combined = weighted_average([u.params for u in updates], [weights[u.name] for u in updates])
+    assert np.allclose(combined[0], [6.0])
+    assert info["reporting_groups"] == 2
+
+
 SMALL = copy.deepcopy(CFG)
 SMALL["federated"]["rounds"] = 3
 
@@ -209,12 +353,12 @@ def _():
     return f"reported val MSE {v[0]:.5f} -> {v[-1]:.5f}"
 
 
-@check("communication accounting: 2 x model + metadata per trained site, 16 B per heartbeat")
+@check("communication accounting: 3 model transfers + gate metadata + heartbeats")
 def _():
     r = run_federated(CLIENTS, SMALL, SEED, "reliability_fedavg", event_aware=True, verbose=False)
     rd, mb = r.extra["rounds"], r.extra["model_bytes"]
     hb = len(CLIENTS) - rd["n_active"] - rd["n_dropped"]
-    expected = rd["n_active"] * (2 * mb + METADATA_BYTES) + hb * CFG["event_aware"]["heartbeat_bytes"]
+    expected = rd["n_active"] * (MODEL_TRANSFERS * mb + METADATA_BYTES) + hb * CFG["event_aware"]["heartbeat_bytes"]
     assert (rd["bytes"] == expected).all() and mb == 7937 * 4
     return f"model update = {mb / 1024:.1f} KB"
 
@@ -291,6 +435,20 @@ def _():
     assert any(abs(q1[i] - x) < 1e-12 for x in past_loss)
 
 
+@check("calibration: future residuals cannot change current guarded margin or warning")
+def _():
+    node = _synthetic_node(n_days=4)
+    margin, fixed = np.ones(len(node)), np.full(len(node), 5.0)
+    a = monitor_margin(node, margin, 0.05, 72, 12, 3, fixed)
+    changed = node.copy()
+    changed.loc[100:, "actual_mw"] -= 100
+    b = monitor_margin(changed, margin, 0.05, 72, 12, 3, fixed)
+    assert np.allclose(a.guarded_margin_mw[:103], b.guarded_margin_mw[:103])
+    assert np.allclose(a.rolling_coverage[:103], b.rolling_coverage[:103], equal_nan=True)
+    assert a.calibration_samples.iloc[0] == 0
+    assert a.guarded_margin_mw.iloc[0] == 5.0
+
+
 @check("scheduler: expected gap, power cap and daily energy cap are enforced")
 def _():
     t = pd.date_range("2019-06-01 06:00", periods=12, freq="10min")
@@ -335,4 +493,10 @@ def _():
 
 fails = [r for r in RESULTS if not r[0]]
 print(f"\n{len(RESULTS) - len(fails)}/{len(RESULTS)} checks passed")
+import json
+audit_path = Path(CFG["paths"]["outputs"]) / "metrics/audit_checks.json"
+audit_path.parent.mkdir(parents=True, exist_ok=True)
+audit_path.write_text(json.dumps({"passed": len(RESULTS) - len(fails), "total": len(RESULTS),
+                                 "checks": [{"passed": ok, "name": name, "detail": detail}
+                                            for ok, name, detail in RESULTS]}, indent=2), encoding="utf-8")
 sys.exit(1 if fails else 0)

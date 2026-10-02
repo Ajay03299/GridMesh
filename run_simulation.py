@@ -13,13 +13,16 @@ import pandas as pd
 from src.data.adapter import load_config
 from src.data.preprocessing import prepare_clients
 from src.evaluation.experiments import (evaluate, run_centralized, run_local_only,
-                                        run_persistence, save_predictions)
+                                        run_persistence, save_predictions, run_decision_tree,
+                                        run_local_xgboost, run_centralized_xgboost)
 from src.federated.server import run_federated
 from src.models.forecasting_model import set_seed
 
 BASELINES = ["persistence", "smart_persistence", "local_only", "centralized"]
-FL = ["fedavg", "reliability_fedavg", "reliability_fedavg_event"]
-METHOD_GROUPS = {"baselines": BASELINES, "fl": FL, "all": BASELINES + FL}
+FL = ["fedavg", "reliability_fedavg", "reliability_fedavg_event", "hierarchical_reliability_fedavg"]
+TREES = ["decision_tree", "local_xgboost", "centralized_xgboost"]
+METHOD_GROUPS = {"baselines": BASELINES, "trees": TREES, "fl": FL,
+                 "all": BASELINES + FL}
 
 
 def parse_args():
@@ -82,9 +85,16 @@ def _run(name, clients, cfg, seed, faulty=None, verbose=True):
         return run_local_only(clients, cfg, seed)
     if name == "centralized":
         return run_centralized(clients, cfg, seed)
+    if name == "decision_tree":
+        return run_decision_tree(clients, cfg, seed)
+    if name == "local_xgboost":
+        return run_local_xgboost(clients, cfg, seed)
+    if name == "centralized_xgboost":
+        return run_centralized_xgboost(clients, cfg, seed)
     if name in FL:
         return run_federated(clients, cfg, seed,
-                             method="fedavg" if name == "fedavg" else "reliability_fedavg",
+                             method=name if name in ("fedavg", "hierarchical_reliability_fedavg")
+                                    else "reliability_fedavg",
                              event_aware=name.endswith("_event"),
                              faulty_clients=faulty, verbose=verbose)
     raise ValueError(f"Unknown method '{name}'")

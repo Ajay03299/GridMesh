@@ -2,7 +2,48 @@
 
 Hackathon prototype · Yuva Yodha Energy Tech Hackathon · Grid Reliability & Renewable Intermittency track.
 
-**Measured results: [`outputs/RESULTS.md`](outputs/RESULTS.md)** (auto-generated, every number from the code).
+**Current evidence: [`outputs/RESULTS.md`](outputs/RESULTS.md)**. Methodology and limits:
+[`docs/MODEL_RELIABILITY_SCALABILITY.md`](docs/MODEL_RELIABILITY_SCALABILITY.md).
+
+The enhanced branch adds decision trees, local/pooled XGBoost, a 12-method comparison, update
+screening, rollback, forecast fallback, causal calibration monitoring and two-stage hierarchical
+aggregation. The scale matrix reaches 500 logical clients; larger tests reuse reference datasets
+and must not be presented as 500 independently measured sites.
+
+## Windows setup and new evidence commands
+
+From this repository folder in PowerShell:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe audit.py
+.\.venv\Scripts\python.exe run_common_comparison.py --quick
+.\.venv\Scripts\python.exe run_tree_comparison.py --quick
+.\.venv\Scripts\python.exe run_reliability_stress.py --quick
+.\.venv\Scripts\python.exe run_scaling.py --max-sites 500
+.\.venv\Scripts\python.exe build_dashboard.py
+.\.venv\Scripts\python.exe -m streamlit run dashboard.py
+```
+
+Remove `--quick` for the five-seed tree, 12-method and reliability runs. Then run
+`python run_scale_stress.py`, `python run_operational_stress.py`, `python build_evidence_report.py`
+and `python run_reserve_benchmark.py --common`. Run `python run_reliability_stress.py --scenarios sensor_recovery`
+before generating the evidence report, and `python check_dashboard.py` after the dashboard build.
+Run `python build_evidence_plots.py` after all full comparisons to refresh the enhanced figures.
+Quick runs save distinct tables. Five-seed recurrent
+models and stress matrices can take tens of minutes or longer on a laptop. Plan full runs before
+the demo. The dashboard replays precomputed results and needs no live training.
+
+The dashboard opens in dark mode. Use **Dark mode** in the sidebar to switch to light
+mode. Charts, evidence plots, table cells and operator panels follow the selection;
+it persists across scenario changes in the current session and does not change results.
+`python check_dashboard.py` checks all four scenarios in both themes and verifies
+that switching themes leaves the displayed metrics unchanged.
+
+The supplied weather CSV has no verified year/location metadata. 2019 is assumed. Measured Indian
+PV/load validation is a next milestone. The daily reserve LP is a retrospective benchmark,
+while its uncertainty and monitoring are causal. A live pilot requires rolling planning.
 
 ## Problem
 Grid operators must hold reserve for the gap between forecast and actual renewable output.
@@ -23,7 +64,7 @@ supply gap from forecast uncertainty. Every policy faces the same power, energy,
   measures this effect instead of assuming it.
 - **Accessibility:** the operator sees the expected gap, uncertainty allowance, recommended backup,
   and a clear capacity warning. Software cost remains separate from hardware and energy.
-- **Scalability:** the same interfaces run from 4 to 100 virtual sites; sampled participation and
+- **Scalability:** the same interfaces run from 4 to 500 logical clients; sampled participation and
   repeatable neighbourhood coordinators avoid one unconstrained city-scale optimizer.
 
 Target users are community energy operators, ESCOs, and DISCOM teams managing clusters that already
@@ -34,10 +75,11 @@ replace protection, islanding, or utility operating procedures.
 ```bash
 python3 -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python audit.py                    # 24 automated correctness checks
-python run_experiments.py          # full experiment matrix, 5 seeds, plots + RESULTS.md (~7 min)
-python run_scaling.py              # communication + accuracy, 4 -> 100 sites (~2 min)
-python build_dashboard.py          # pre-compute the 4 dashboard scenarios (~30 s)
+python audit.py                    # 36 automated correctness checks
+python run_common_comparison.py    # enhanced 12-method, five-seed matrix (tens of minutes or longer)
+python run_scaling.py              # 4..500 logical clients; see scale-data limits above
+python build_dashboard.py          # pre-compute 4 dashboard scenarios (several minutes)
+python check_dashboard.py          # all four scenario UI smoke tests
 python -m streamlit run dashboard.py   # demo dashboard in the browser (Ctrl+C to stop)
 ```
 
@@ -55,9 +97,15 @@ python -m streamlit run dashboard.py   # demo dashboard in the browser (Ctrl+C t
 | `python run_model_comparison.py [--quick]` | federated MLP / GRU / LSTM under one protocol |
 | `python run_reserve_sim.py [--policy fixed20 \| nsigma \| empirical \| all] [--delta 0.05]` | constrained one-node backup schedule |
 | `python run_experiments.py [--quick]` | full matrix over seeds → tables, `summary.json`, 13 plots, `RESULTS.md` |
-| `python run_scaling.py` | traffic per round and accuracy for 4, 20, 50, 100 sites → plot 14 |
-| `python audit.py` | 24 correctness checks: leakage, maths, three model families, reserve causality, constrained scheduling, faults, determinism and real-data path |
-| `python run_reserve_benchmark.py` | five-seed constrained reserve benchmark used in the pitch |
+| `python run_scaling.py` | 4..500-site payload/runtime stress; capped sampling and hierarchy |
+| `python run_common_comparison.py [--quick]` | 12 forecasting methods with common held-out metrics and reserve outcomes |
+| `python run_tree_comparison.py [--quick]` | Decision tree, local/pooled XGBoost and readable gain importance |
+| `python run_reliability_stress.py [--quick]` | Paired dropout, faults, recovery and seasonal-shift scorecard |
+| `python run_scale_stress.py` | Large logical-client fault/dropout/unavailable-neighbourhood tests |
+| `python run_operational_stress.py` | Cloud shock, resource shortage and runtime forecast fallback |
+| `python audit.py` | 36 correctness checks including tree fitting, fallback, rollback, recovery, hierarchy and causality |
+| `python run_reserve_benchmark.py --common` | enhanced five-seed constrained reserve benchmark used in the pitch |
+| `python check_dashboard.py` | Headless regression smoke test for all four dashboard scenarios |
 | `python build_dashboard.py` + `python -m streamlit run dashboard.py` | dashboard: NORMAL / FAULTY CLIENT / CLIENT DROPOUT / WEATHER-REGIME SHIFT |
 
 Options: `--fault-type stale (default) | target_noise | bias | feature_corruption`, `--fault-severity 2`,
@@ -128,7 +176,7 @@ weight_k = n_k · trust_k · quality_k (0 if trust_k < 0.2 → quarantined), the
 
 **Event-aware participation.** Drift if `e_now > mean + 2·std` of a site's last 5 errors and
 at least 10% above that mean.
-Drifting sites always train; stable ones train with probability 0.5 and otherwise send a
+Drifting sites have priority within the configured client cap; stable ones train with probability 0.5 and otherwise send a
 16-byte heartbeat (the error of the last model they received). A heartbeat only informs trust
 if that model had been trained at least once.
 
@@ -165,30 +213,14 @@ and cost inputs are simulation assumptions.
   of all four default sites; every site is still validated and tested on all 12 months.
 - Results differ in the 4th decimal between machines (PyTorch on Apple Silicon vs Linux).
 
-## Headline findings (5 seeds, 4 sites — exact values in RESULTS.md)
-- **Accuracy without pooling data:** FedAvg and reliability-aware FedAvg match centralized training
-  on pooled data (RMSE ≈ 0.064 p.u.) and beat local-only training (≈ 0.067), most on the weakest
-  site (worst-site ≈ 0.067 vs 0.071). FL beats smart persistence on RMSE by ~13%; MAE is about tied.
-- **Faulty sites:** with frozen sensors or noisy meters, vanilla FedAvg's healthy sites get worse
-  (+2.4% on average over all fault types, +9% with two stale-sensor sites, growing with severity).
-  Reliability-aware FedAvg stays at the clean level (≈ 0%) and beats FedAvg in 19 of 20 runs of
-  the faults that hurt FedAvg. Feature corruption and multiplicative meter bias barely hurt either
-  method (a coin flip, 4 of 10).
-- **Event-aware participation** halves communication (≈ −50%) for a small accuracy cost
-  (RMSE ≈ 0.065 vs 0.064).
-- **Dropout** up to 50%: training continues; RMSE changes by about 1% or less.
-- **Constrained reserve:** with explicit grid-import, backup-power and daily-energy limits, the
-  n-sigma δ = 0.05 policy uses **34.9% less scheduled backup**, produces **10.3% less unserved
-  energy**, and lowers assumed operating cost **17.2%** versus a fixed 20%-of-demand margin
-  (five-seed means). Nominal uncertainty coverage is not an end-to-end availability guarantee:
-  asset limits create a visible planned capacity gap. The empirical tail policy is included as a
-  non-Gaussian benchmark; no window was tuned on the test set.
-- **Scaling to 100 sites** (plot 14, all sites eligible every round): FedAvg traffic grows linearly
-  (≈ 6.4 MB per round at 100 sites); event-aware participation cuts it by ~40% at the same
-  accuracy. ~3 GB RAM, under a minute on a MacBook. With 20% of sites faulty and 20% sampling per
-  round the reliability-aware advantage is small (single seed): sampling already dilutes bad sites.
-- **Seasonal shift** (train Jan–Sep, test Nov–Dec): learned models over-forecast and lose to smart
-  persistence — a real limitation and the motivation for drift handling.
+## Current findings
+
+Use [`docs/PITCH_NUMBERS.md`](docs/PITCH_NUMBERS.md) for pitch numbers and
+[`outputs/RESULTS.md`](outputs/RESULTS.md) for the complete model, reliability, scale and reserve
+tables. Those reports derive from completed frozen-protocol experiments. Failed targets remain
+visible. Legacy `run_experiments.py` outputs use an older experiment matrix and overwrite the
+results report, so run `build_evidence_report.py` afterward to restore the current report.
+Do not mix legacy two-transfer communication values with the new three-transfer accounting.
 
 ## Roadmap: from this simulation to the 100-site prototype
 | Step | What changes | Where in the code |
@@ -199,7 +231,7 @@ and cost inputs are simulation assumptions.
 | Model selection | validate MLP / GRU / LSTM and personalised layers with measured sites | `src/models/forecasting_model.py` |
 | Calibrated reserve | select Gaussian or empirical windows on validation data | `src/reserve/reserve_policy.py` |
 | Asset-constrained schedule | replace assumed grid / backup limits with operator data | `src/reserve/simulator.py` |
-| Drift handling | fine-tune when drift fires (fixes the seasonal-shift weakness) | `src/reliability/drift.py`, `server.py` |
+| Drift handling | validate fine-tuning and safe fallback under unseen seasons | `src/reliability/drift.py`, `server.py` |
 | Live operation | forecasts every 10 min streamed into the dashboard | `dashboard.py` |
 
 Run `python audit.py` after every change — it is the regression guard.

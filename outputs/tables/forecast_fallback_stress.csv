@@ -1,0 +1,5 @@
+scenario,source,reason,forecast_age_minutes,operator_attention
+stale_inputs,smart_persistence,stale_inputs,0,True
+expired_forecast,smart_persistence,forecast_expired,60,True
+drift_alarm,smart_persistence,drift_alarm,0,True
+invalid_prediction,smart_persistence,invalid_or_missing_model,0,True

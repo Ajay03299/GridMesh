@@ -1,0 +1,700 @@
+{
+  "args": {
+    "sites": 100,
+    "rounds": 5,
+    "seed": 42
+  },
+  "config": {
+    "seed": 42,
+    "data": {
+      "path": "data/raw/wind.csv",
+      "timestamp_col": "auto",
+      "assumed_year": 2019,
+      "target_col": "WindSpeed_Class",
+      "power_col": null,
+      "site_col": null,
+      "task": "auto"
+    },
+    "target": {
+      "mode": "pv_from_irradiance",
+      "column": null,
+      "capacity": null,
+      "capacity_col": null,
+      "column_unit_mw": 1.0
+    },
+    "pv_model": {
+      "noct": 45.0,
+      "ref_irradiance": 1000.0,
+      "inverter_clip": 1.0
+    },
+    "split": {
+      "mode": "blocked_monthly",
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "features": {
+      "lookback": 6,
+      "horizon": 3,
+      "lagged": [
+        "pv",
+        "GHI",
+        "DNI",
+        "DHI",
+        "kt",
+        "Temperature"
+      ],
+      "current": [
+        "Relative Humidity",
+        "Pressure",
+        "Precipitable Water",
+        "Aerosol Optical Depth",
+        "Dew Point"
+      ],
+      "cloud_type_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "future_known": [
+        "Clearsky GHI",
+        "cos_zenith",
+        "hour_sin",
+        "hour_cos",
+        "doy_sin",
+        "doy_cos"
+      ],
+      "daytime_zenith_max": 85.0
+    },
+    "virtual_sites": {
+      "capacity_mw": [
+        5.0,
+        20.0
+      ],
+      "derate": [
+        0.8,
+        0.9
+      ],
+      "temp_coeff": [
+        -0.0045,
+        -0.0035
+      ],
+      "sensor_noise_std": [
+        0.0,
+        0.05
+      ],
+      "sensor_bias": [
+        -0.03,
+        0.03
+      ],
+      "missing_rate": [
+        0.0,
+        0.03
+      ],
+      "target_noise_std": [
+        0.0,
+        0.01
+      ],
+      "history_fraction": [
+        0.2,
+        1.0
+      ]
+    },
+    "model": {
+      "architecture": "mlp",
+      "cpu_threads": 1,
+      "lookback": 6,
+      "sequence_features": 6,
+      "target": "residual_smart_persistence",
+      "hidden": [
+        64,
+        64
+      ],
+      "lr": 0.001,
+      "batch_size": 256,
+      "epochs": 15,
+      "weight_decay": 0.0
+    },
+    "tree_models": {
+      "decision_tree": {
+        "max_depth": 8,
+        "min_samples_leaf": 30
+      },
+      "xgboost": {
+        "n_estimators": 600,
+        "learning_rate": 0.03,
+        "max_depth": 6,
+        "min_child_weight": 5,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "early_stopping_rounds": 40,
+        "n_jobs": 4
+      }
+    },
+    "paths": {
+      "outputs": "outputs"
+    },
+    "federated": {
+      "rounds": 20,
+      "local_epochs": 1,
+      "client_fraction": 1.0,
+      "min_clients": 2,
+      "max_clients_per_round": null,
+      "neighbourhood_size": 25,
+      "dropout_rate": 0.0,
+      "select_best": true
+    },
+    "reliability": {
+      "error_tolerance": 0.25,
+      "error_sharpness": 2.0,
+      "trust_ema": 0.5,
+      "quarantine_below": 0.2,
+      "use_data_quality": true
+    },
+    "safety": {
+      "max_update_norm_ratio": 8.0,
+      "rollback_val_ratio": 1.35,
+      "max_site_validation_rmse": 0.25,
+      "max_validation_bias": 0.1,
+      "max_baseline_rmse_ratio": 2.0,
+      "baseline_rmse_floor": 0.1,
+      "calibration_window": 72,
+      "calibration_tolerance": 0.03,
+      "fallback_chain": [
+        "last_trusted_model",
+        "local_model",
+        "smart_persistence"
+      ]
+    },
+    "event_aware": {
+      "drift_k": 2.0,
+      "window": 5,
+      "min_history": 3,
+      "min_rel_increase": 0.1,
+      "stable_participation": 0.5,
+      "heartbeat_bytes": 16
+    },
+    "faults": {
+      "start_round": 1,
+      "feature_corruption": {
+        "irradiance_scale": 0.6,
+        "noise_std": 0.25
+      },
+      "target_noise": {
+        "std": 0.1
+      },
+      "stale": {
+        "hold_steps": 12
+      },
+      "bias": {
+        "scale": 1.25
+      }
+    },
+    "reserve": {
+      "forecast_method": "reliability_fedavg",
+      "fixed_fraction": 0.2,
+      "delta": 0.05,
+      "delta_sweep": [
+        0.02,
+        0.05,
+        0.1
+      ],
+      "window": 36,
+      "empirical_window": 72,
+      "min_periods": 12,
+      "cost_reserve_per_mwh": 1.0,
+      "cost_shortfall_per_mwh": 20.0,
+      "peak_priority_weight": 2.0,
+      "grid_import_limit_mw": null,
+      "grid_import_limit_fraction": 0.9,
+      "backup_power_limit_mw": null,
+      "backup_power_fraction": 0.25,
+      "backup_energy_limit_mwh": null,
+      "backup_energy_hours": 4.0,
+      "demand": {
+        "base_mw_per_mw_capacity": 0.8,
+        "morning_peak": 0.25,
+        "evening_peak": 0.45,
+        "noise_std": 0.02
+      }
+    },
+    "experiments": {
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "fault_scenarios": [
+        {
+          "type": "target_noise",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "bias",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "feature_corruption",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "target_noise",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        }
+      ],
+      "severity_sweep": {
+        "type": "stale",
+        "sites": [
+          "D"
+        ],
+        "severities": [
+          0.5,
+          1,
+          2,
+          4
+        ]
+      },
+      "dropout_rates": [
+        0.25,
+        0.5
+      ]
+    },
+    "plots": {
+      "example_month": 7,
+      "fault_scenario": "fault_stale_CD"
+    }
+  },
+  "results": [
+    {
+      "scenario": "healthy",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "fedavg",
+      "healthy_rmse": 0.06792316715935424,
+      "global_rmse": 0.06792316715935424,
+      "worst_site_rmse": 0.06905978307427273,
+      "communication_mb": 9.5308,
+      "feeder_communication_mb": 9.5308,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "healthy",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg",
+      "healthy_rmse": 0.06792491112797934,
+      "global_rmse": 0.06792491112797934,
+      "worst_site_rmse": 0.0690636502016347,
+      "communication_mb": 9.5308,
+      "feeder_communication_mb": 9.5308,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "healthy",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg_event",
+      "healthy_rmse": 0.06846580353875427,
+      "global_rmse": 0.06846580353875427,
+      "worst_site_rmse": 0.06943667973503274,
+      "communication_mb": 5.630228,
+      "feeder_communication_mb": 5.630228,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "healthy",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "hierarchical_reliability_fedavg",
+      "healthy_rmse": 0.06792487058381536,
+      "global_rmse": 0.06792487058381536,
+      "worst_site_rmse": 0.06906360465247803,
+      "communication_mb": 11.43696,
+      "feeder_communication_mb": 1.90616,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "dropout25",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "fedavg",
+      "healthy_rmse": 0.06766366937876057,
+      "global_rmse": 0.06766366937876057,
+      "worst_site_rmse": 0.06877925600556556,
+      "communication_mb": 7.243408,
+      "feeder_communication_mb": 7.243408,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "dropout25",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg",
+      "healthy_rmse": 0.06766021081338075,
+      "global_rmse": 0.06766021081338075,
+      "worst_site_rmse": 0.06876907107802016,
+      "communication_mb": 7.243408,
+      "feeder_communication_mb": 7.243408,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "dropout25",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg_event",
+      "healthy_rmse": 0.06875785322791433,
+      "global_rmse": 0.06875785322791433,
+      "worst_site_rmse": 0.06963993245641205,
+      "communication_mb": 4.1053,
+      "feeder_communication_mb": 4.1053,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "dropout25",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "hierarchical_reliability_fedavg",
+      "healthy_rmse": 0.06765941173292037,
+      "global_rmse": 0.06765941173292037,
+      "worst_site_rmse": 0.06876810969199068,
+      "communication_mb": 9.05426,
+      "feeder_communication_mb": 1.810852,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "dropout50",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "fedavg",
+      "healthy_rmse": 0.06758732908689526,
+      "global_rmse": 0.06758732908689526,
+      "worst_site_rmse": 0.06868168002823659,
+      "communication_mb": 5.24194,
+      "feeder_communication_mb": 5.24194,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "dropout50",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg",
+      "healthy_rmse": 0.06759406409559396,
+      "global_rmse": 0.06759406409559396,
+      "worst_site_rmse": 0.06868499946796336,
+      "communication_mb": 5.24194,
+      "feeder_communication_mb": 5.24194,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "dropout50",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg_event",
+      "healthy_rmse": 0.06886064808060603,
+      "global_rmse": 0.06886064808060603,
+      "worst_site_rmse": 0.06972220908905112,
+      "communication_mb": 2.866296,
+      "feeder_communication_mb": 2.866296,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "dropout50",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "hierarchical_reliability_fedavg",
+      "healthy_rmse": 0.06757843660305513,
+      "global_rmse": 0.06757843660305513,
+      "worst_site_rmse": 0.06866987650302511,
+      "communication_mb": 7.052792,
+      "feeder_communication_mb": 1.810852,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault10",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "fedavg",
+      "healthy_rmse": 0.06715035337436542,
+      "global_rmse": 0.0671293855311637,
+      "worst_site_rmse": 0.06815186016248542,
+      "communication_mb": 9.5308,
+      "feeder_communication_mb": 9.5308,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault10",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg",
+      "healthy_rmse": 0.06805282104836945,
+      "global_rmse": 0.0680288328832167,
+      "worst_site_rmse": 0.06915474233375987,
+      "communication_mb": 9.5308,
+      "feeder_communication_mb": 9.5308,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault10",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg_event",
+      "healthy_rmse": 0.06852857705166304,
+      "global_rmse": 0.06850942826607086,
+      "worst_site_rmse": 0.06947152111372844,
+      "communication_mb": 5.630228,
+      "feeder_communication_mb": 5.630228,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault10",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "hierarchical_reliability_fedavg",
+      "healthy_rmse": 0.06798414038231404,
+      "global_rmse": 0.06796017580095261,
+      "worst_site_rmse": 0.06909183535652098,
+      "communication_mb": 11.43696,
+      "feeder_communication_mb": 1.90616,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault20",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "fedavg",
+      "healthy_rmse": 0.06847628033799776,
+      "global_rmse": 0.06847628033799776,
+      "worst_site_rmse": 0.06945777328228162,
+      "communication_mb": 9.5308,
+      "feeder_communication_mb": 9.5308,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault20",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg",
+      "healthy_rmse": 0.06797296873438677,
+      "global_rmse": 0.06797296873438677,
+      "worst_site_rmse": 0.06908668529225075,
+      "communication_mb": 9.5308,
+      "feeder_communication_mb": 9.5308,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault20",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg_event",
+      "healthy_rmse": 0.06846969988039471,
+      "global_rmse": 0.0684696998803947,
+      "worst_site_rmse": 0.06941235889305342,
+      "communication_mb": 5.630228,
+      "feeder_communication_mb": 5.630228,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault20",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "hierarchical_reliability_fedavg",
+      "healthy_rmse": 0.06840746885211603,
+      "global_rmse": 0.06840746885211603,
+      "worst_site_rmse": 0.069304058421814,
+      "communication_mb": 11.43696,
+      "feeder_communication_mb": 1.90616,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault20_dropout25",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "fedavg",
+      "healthy_rmse": 0.0684386998622546,
+      "global_rmse": 0.0684386998622546,
+      "worst_site_rmse": 0.06945591166337511,
+      "communication_mb": 7.243408,
+      "feeder_communication_mb": 7.243408,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault20_dropout25",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg",
+      "healthy_rmse": 0.06751165837263227,
+      "global_rmse": 0.06751165837263226,
+      "worst_site_rmse": 0.06855594649349307,
+      "communication_mb": 7.243408,
+      "feeder_communication_mb": 7.243408,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault20_dropout25",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg_event",
+      "healthy_rmse": 0.06868956129033482,
+      "global_rmse": 0.06868956129033482,
+      "worst_site_rmse": 0.06955789902591084,
+      "communication_mb": 4.1053,
+      "feeder_communication_mb": 4.1053,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "fault20_dropout25",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "hierarchical_reliability_fedavg",
+      "healthy_rmse": 0.06820963844048838,
+      "global_rmse": 0.06820963844048838,
+      "worst_site_rmse": 0.06911766553930251,
+      "communication_mb": 9.05426,
+      "feeder_communication_mb": 1.810852,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "neighbourhood_offline",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "fedavg",
+      "healthy_rmse": 0.06792612847611747,
+      "global_rmse": 0.06792612847611747,
+      "worst_site_rmse": 0.07064579804279401,
+      "communication_mb": 9.5308,
+      "feeder_communication_mb": 9.5308,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "neighbourhood_offline",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg",
+      "healthy_rmse": 0.06792678690286783,
+      "global_rmse": 0.06792678690286783,
+      "worst_site_rmse": 0.07064579804279401,
+      "communication_mb": 9.5308,
+      "feeder_communication_mb": 9.5308,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "neighbourhood_offline",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "reliability_fedavg_event",
+      "healthy_rmse": 0.06862385500107686,
+      "global_rmse": 0.06862385500107686,
+      "worst_site_rmse": 0.07064579804279401,
+      "communication_mb": 5.628228,
+      "feeder_communication_mb": 5.628228,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    },
+    {
+      "scenario": "neighbourhood_offline",
+      "sites": 100,
+      "seed": 42,
+      "rounds": 5,
+      "method": "hierarchical_reliability_fedavg",
+      "healthy_rmse": 0.06792670848505203,
+      "global_rmse": 0.06792670848505203,
+      "worst_site_rmse": 0.07064579804279401,
+      "communication_mb": 10.96042,
+      "feeder_communication_mb": 1.42962,
+      "fallback_rounds": 0,
+      "data_mode": "shared_reference_site_protocol_stress"
+    }
+  ]
+}

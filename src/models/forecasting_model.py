@@ -55,6 +55,8 @@ class RecurrentForecaster(nn.Module):
 
 
 def build_model(n_features, mcfg, seed):
+    # Small CPU models are slower when each minibatch spawns many BLAS workers.
+    torch.set_num_threads(mcfg.get("cpu_threads", 1))
     torch.manual_seed(seed)
     architecture = mcfg.get("architecture", "mlp").lower()
     hidden = tuple(mcfg["hidden"])
@@ -107,7 +109,10 @@ def train_epochs(model, X, y, epochs, mcfg, seed):
 def predict(model, split):
     """Final forecast in p.u. = baseline + learned correction, clipped to [0, 1]."""
     model.eval()
-    return np.clip(split.base + model(torch.from_numpy(split.X)).numpy(), 0.0, 1.0)
+    raw = split.base + model(torch.from_numpy(split.X)).numpy()
+    # Preserve invalidity for the validation/fallback layer; clipping infinity to 1
+    # would otherwise hide a failed model behind a plausible physical bound.
+    return np.where(np.isfinite(raw), np.clip(raw, 0.0, 1.0), np.nan)
 
 
 def mse_on(model, split):

@@ -1,0 +1,610 @@
+{
+  "args": {
+    "sizes": "4,20,50,100,250,500",
+    "rounds": 3,
+    "max_clients_per_round": 20,
+    "max_sites": 500,
+    "quick": false
+  },
+  "config": {
+    "seed": 42,
+    "data": {
+      "path": "data/raw/wind.csv",
+      "timestamp_col": "auto",
+      "assumed_year": 2019,
+      "target_col": "WindSpeed_Class",
+      "power_col": null,
+      "site_col": null,
+      "task": "auto"
+    },
+    "target": {
+      "mode": "pv_from_irradiance",
+      "column": null,
+      "capacity": null,
+      "capacity_col": null,
+      "column_unit_mw": 1.0
+    },
+    "pv_model": {
+      "noct": 45.0,
+      "ref_irradiance": 1000.0,
+      "inverter_clip": 1.0
+    },
+    "split": {
+      "mode": "blocked_monthly",
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "features": {
+      "lookback": 6,
+      "horizon": 3,
+      "lagged": [
+        "pv",
+        "GHI",
+        "DNI",
+        "DHI",
+        "kt",
+        "Temperature"
+      ],
+      "current": [
+        "Relative Humidity",
+        "Pressure",
+        "Precipitable Water",
+        "Aerosol Optical Depth",
+        "Dew Point"
+      ],
+      "cloud_type_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "future_known": [
+        "Clearsky GHI",
+        "cos_zenith",
+        "hour_sin",
+        "hour_cos",
+        "doy_sin",
+        "doy_cos"
+      ],
+      "daytime_zenith_max": 85.0
+    },
+    "virtual_sites": {
+      "capacity_mw": [
+        5.0,
+        20.0
+      ],
+      "derate": [
+        0.8,
+        0.9
+      ],
+      "temp_coeff": [
+        -0.0045,
+        -0.0035
+      ],
+      "sensor_noise_std": [
+        0.0,
+        0.05
+      ],
+      "sensor_bias": [
+        -0.03,
+        0.03
+      ],
+      "missing_rate": [
+        0.0,
+        0.03
+      ],
+      "target_noise_std": [
+        0.0,
+        0.01
+      ],
+      "history_fraction": [
+        0.2,
+        1.0
+      ]
+    },
+    "model": {
+      "architecture": "mlp",
+      "cpu_threads": 1,
+      "lookback": 6,
+      "sequence_features": 6,
+      "target": "residual_smart_persistence",
+      "hidden": [
+        64,
+        64
+      ],
+      "lr": 0.001,
+      "batch_size": 256,
+      "epochs": 15,
+      "weight_decay": 0.0
+    },
+    "tree_models": {
+      "decision_tree": {
+        "max_depth": 8,
+        "min_samples_leaf": 30
+      },
+      "xgboost": {
+        "n_estimators": 600,
+        "learning_rate": 0.03,
+        "max_depth": 6,
+        "min_child_weight": 5,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "early_stopping_rounds": 40,
+        "n_jobs": 4
+      }
+    },
+    "paths": {
+      "outputs": "outputs"
+    },
+    "federated": {
+      "rounds": 3,
+      "local_epochs": 1,
+      "client_fraction": 1.0,
+      "min_clients": 2,
+      "max_clients_per_round": 20,
+      "neighbourhood_size": 25,
+      "dropout_rate": 0.0,
+      "select_best": true
+    },
+    "reliability": {
+      "error_tolerance": 0.25,
+      "error_sharpness": 2.0,
+      "trust_ema": 0.5,
+      "quarantine_below": 0.2,
+      "use_data_quality": true
+    },
+    "safety": {
+      "max_update_norm_ratio": 8.0,
+      "rollback_val_ratio": 1.35,
+      "max_site_validation_rmse": 0.25,
+      "max_validation_bias": 0.1,
+      "max_baseline_rmse_ratio": 2.0,
+      "baseline_rmse_floor": 0.1,
+      "calibration_window": 72,
+      "calibration_tolerance": 0.03,
+      "fallback_chain": [
+        "last_trusted_model",
+        "local_model",
+        "smart_persistence"
+      ]
+    },
+    "event_aware": {
+      "drift_k": 2.0,
+      "window": 5,
+      "min_history": 3,
+      "min_rel_increase": 0.1,
+      "stable_participation": 0.5,
+      "heartbeat_bytes": 16
+    },
+    "faults": {
+      "start_round": 1,
+      "feature_corruption": {
+        "irradiance_scale": 0.6,
+        "noise_std": 0.25
+      },
+      "target_noise": {
+        "std": 0.1
+      },
+      "stale": {
+        "hold_steps": 12
+      },
+      "bias": {
+        "scale": 1.25
+      }
+    },
+    "reserve": {
+      "forecast_method": "reliability_fedavg",
+      "fixed_fraction": 0.2,
+      "delta": 0.05,
+      "delta_sweep": [
+        0.02,
+        0.05,
+        0.1
+      ],
+      "window": 36,
+      "empirical_window": 72,
+      "min_periods": 12,
+      "cost_reserve_per_mwh": 1.0,
+      "cost_shortfall_per_mwh": 20.0,
+      "peak_priority_weight": 2.0,
+      "grid_import_limit_mw": null,
+      "grid_import_limit_fraction": 0.9,
+      "backup_power_limit_mw": null,
+      "backup_power_fraction": 0.25,
+      "backup_energy_limit_mwh": null,
+      "backup_energy_hours": 4.0,
+      "demand": {
+        "base_mw_per_mw_capacity": 0.8,
+        "morning_peak": 0.25,
+        "evening_peak": 0.45,
+        "noise_std": 0.02
+      }
+    },
+    "experiments": {
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "fault_scenarios": [
+        {
+          "type": "target_noise",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "bias",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "feature_corruption",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "target_noise",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        }
+      ],
+      "severity_sweep": {
+        "type": "stale",
+        "sites": [
+          "D"
+        ],
+        "severities": [
+          0.5,
+          1,
+          2,
+          4
+        ]
+      },
+      "dropout_rates": [
+        0.25,
+        0.5
+      ]
+    },
+    "plots": {
+      "example_month": 7,
+      "fault_scenario": "fault_stale_CD"
+    }
+  },
+  "results": [
+    {
+      "n_sites": 4,
+      "method": "fedavg",
+      "rounds": 3,
+      "global_rmse": 0.06551070028772714,
+      "worst_site_rmse": 0.06686961142551971,
+      "comm_mb_per_round": 0.381232,
+      "participation_rate": 1.0,
+      "clients_per_round_cap": 20,
+      "data_mode": "full_virtual_sites",
+      "sites_per_round": 4.0,
+      "total_comm_mb": 1.143696,
+      "feeder_comm_mb_per_round": 0.381232,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 17.350320499856025,
+      "coordinator_seconds": 0.25638440006878227,
+      "inference_seconds": 0.0806319999974221,
+      "process_peak_memory_mb": 525.144064,
+      "seconds": 17.7
+    },
+    {
+      "n_sites": 4,
+      "method": "reliability_fedavg_event",
+      "rounds": 3,
+      "global_rmse": 0.06685917891651522,
+      "worst_site_rmse": 0.06810111393545364,
+      "comm_mb_per_round": 0.28593999999999997,
+      "participation_rate": 0.75,
+      "clients_per_round_cap": 20,
+      "data_mode": "full_virtual_sites",
+      "sites_per_round": 3.0,
+      "total_comm_mb": 0.85782,
+      "feeder_comm_mb_per_round": 0.28594,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 6.558619100018404,
+      "coordinator_seconds": 0.3356389000546187,
+      "inference_seconds": 0.08253869996406138,
+      "process_peak_memory_mb": 525.144064,
+      "seconds": 7.0
+    },
+    {
+      "n_sites": 20,
+      "method": "fedavg",
+      "rounds": 3,
+      "global_rmse": 0.0664787171458243,
+      "worst_site_rmse": 0.07284248242562305,
+      "comm_mb_per_round": 1.90616,
+      "participation_rate": 1.0,
+      "clients_per_round_cap": 20,
+      "data_mode": "full_virtual_sites",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 5.71848,
+      "feeder_comm_mb_per_round": 1.90616,
+      "rounds_to_converge": 2,
+      "client_training_seconds": 38.27343629999086,
+      "coordinator_seconds": 1.473025899962522,
+      "inference_seconds": 0.38950769999064505,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 40.3
+    },
+    {
+      "n_sites": 20,
+      "method": "reliability_fedavg_event",
+      "rounds": 3,
+      "global_rmse": 0.06802715322167577,
+      "worst_site_rmse": 0.07272127540209178,
+      "comm_mb_per_round": 1.048532,
+      "participation_rate": 0.55,
+      "clients_per_round_cap": 20,
+      "data_mode": "full_virtual_sites",
+      "sites_per_round": 11.0,
+      "total_comm_mb": 3.145596,
+      "feeder_comm_mb_per_round": 1.048532,
+      "rounds_to_converge": 1,
+      "client_training_seconds": 24.7750688000815,
+      "coordinator_seconds": 1.6992526999674737,
+      "inference_seconds": 0.4933778999838978,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 27.1
+    },
+    {
+      "n_sites": 50,
+      "method": "fedavg",
+      "rounds": 3,
+      "global_rmse": 0.07072561404428944,
+      "worst_site_rmse": 0.07199589648127348,
+      "comm_mb_per_round": 1.90616,
+      "participation_rate": 0.4,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 5.71848,
+      "feeder_comm_mb_per_round": 1.90616,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 3.964577100123279,
+      "coordinator_seconds": 0.47524070006329566,
+      "inference_seconds": 0.19469110004138201,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 4.9
+    },
+    {
+      "n_sites": 50,
+      "method": "reliability_fedavg_event",
+      "rounds": 3,
+      "global_rmse": 0.07100162677905626,
+      "worst_site_rmse": 0.07233809646568949,
+      "comm_mb_per_round": 1.080776,
+      "participation_rate": 0.22666666666666668,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 11.333333333333334,
+      "total_comm_mb": 3.242328,
+      "feeder_comm_mb_per_round": 1.080776,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 2.0508323998656124,
+      "coordinator_seconds": 0.9056024000747129,
+      "inference_seconds": 0.2378725999733433,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 3.5
+    },
+    {
+      "n_sites": 100,
+      "method": "fedavg",
+      "rounds": 3,
+      "global_rmse": 0.07113892575301056,
+      "worst_site_rmse": 0.07242621483490762,
+      "comm_mb_per_round": 1.90616,
+      "participation_rate": 0.2,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 5.71848,
+      "feeder_comm_mb_per_round": 1.90616,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 4.876105500035919,
+      "coordinator_seconds": 1.2040894001256675,
+      "inference_seconds": 0.6669190999818966,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 7.5
+    },
+    {
+      "n_sites": 100,
+      "method": "reliability_fedavg_event",
+      "rounds": 3,
+      "global_rmse": 0.0718719539815355,
+      "worst_site_rmse": 0.07326631744213244,
+      "comm_mb_per_round": 1.081576,
+      "participation_rate": 0.11333333333333334,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 11.333333333333334,
+      "total_comm_mb": 3.244728,
+      "feeder_comm_mb_per_round": 1.081576,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 2.4488161001354456,
+      "coordinator_seconds": 2.1583329000277445,
+      "inference_seconds": 0.5631482000462711,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 6.0
+    },
+    {
+      "n_sites": 100,
+      "method": "hierarchical_reliability_fedavg",
+      "rounds": 3,
+      "global_rmse": 0.0711385544129279,
+      "worst_site_rmse": 0.07242619439375175,
+      "comm_mb_per_round": 2.2873919999999996,
+      "participation_rate": 0.2,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 6.862176,
+      "feeder_comm_mb_per_round": 0.381232,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 3.589509899960831,
+      "coordinator_seconds": 0.8993410998955369,
+      "inference_seconds": 0.35221590008586645,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 5.7
+    },
+    {
+      "n_sites": 250,
+      "method": "fedavg",
+      "rounds": 3,
+      "global_rmse": 0.0707997654615947,
+      "worst_site_rmse": 0.07201731771213948,
+      "comm_mb_per_round": 1.90616,
+      "participation_rate": 0.08,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 5.71848,
+      "feeder_comm_mb_per_round": 1.90616,
+      "rounds_to_converge": 2,
+      "client_training_seconds": 3.533703900058754,
+      "coordinator_seconds": 2.090748100192286,
+      "inference_seconds": 0.9675557999871671,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 8.8
+    },
+    {
+      "n_sites": 250,
+      "method": "reliability_fedavg_event",
+      "rounds": 3,
+      "global_rmse": 0.0705588005278931,
+      "worst_site_rmse": 0.07174605397917172,
+      "comm_mb_per_round": 1.083976,
+      "participation_rate": 0.04533333333333334,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 11.333333333333334,
+      "total_comm_mb": 3.251928,
+      "feeder_comm_mb_per_round": 1.083976,
+      "rounds_to_converge": 2,
+      "client_training_seconds": 2.145745899877511,
+      "coordinator_seconds": 5.478419700055383,
+      "inference_seconds": 1.219709899974987,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 10.3
+    },
+    {
+      "n_sites": 250,
+      "method": "hierarchical_reliability_fedavg",
+      "rounds": 3,
+      "global_rmse": 0.07079342715376023,
+      "worst_site_rmse": 0.07200989826417849,
+      "comm_mb_per_round": 2.7639319999999996,
+      "participation_rate": 0.08,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 8.291796,
+      "feeder_comm_mb_per_round": 0.857772,
+      "rounds_to_converge": 2,
+      "client_training_seconds": 3.5369750999379903,
+      "coordinator_seconds": 1.824836099985987,
+      "inference_seconds": 1.2898388999747112,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 8.4
+    },
+    {
+      "n_sites": 500,
+      "method": "fedavg",
+      "rounds": 3,
+      "global_rmse": 0.07095254508329461,
+      "worst_site_rmse": 0.07216086988118867,
+      "comm_mb_per_round": 1.90616,
+      "participation_rate": 0.04,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 5.71848,
+      "feeder_comm_mb_per_round": 1.90616,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 4.474413699936122,
+      "coordinator_seconds": 4.172611299902201,
+      "inference_seconds": 2.326402199920267,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 14.1
+    },
+    {
+      "n_sites": 500,
+      "method": "reliability_fedavg_event",
+      "rounds": 3,
+      "global_rmse": 0.07052648138308992,
+      "worst_site_rmse": 0.07165151962632589,
+      "comm_mb_per_round": 1.087976,
+      "participation_rate": 0.02266666666666667,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 11.333333333333334,
+      "total_comm_mb": 3.263928,
+      "feeder_comm_mb_per_round": 1.087976,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 1.9614362000720575,
+      "coordinator_seconds": 9.344906099955551,
+      "inference_seconds": 2.6952302999561653,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 16.7
+    },
+    {
+      "n_sites": 500,
+      "method": "hierarchical_reliability_fedavg",
+      "rounds": 3,
+      "global_rmse": 0.07095032624445675,
+      "worst_site_rmse": 0.07215842751253808,
+      "comm_mb_per_round": 3.2087026666666665,
+      "participation_rate": 0.04,
+      "clients_per_round_cap": 20,
+      "data_mode": "shared_reference_site_protocol_stress",
+      "sites_per_round": 20.0,
+      "total_comm_mb": 9.626108,
+      "feeder_comm_mb_per_round": 1.3025426666666668,
+      "rounds_to_converge": 3,
+      "client_training_seconds": 3.9860491999424994,
+      "coordinator_seconds": 4.008827099925838,
+      "inference_seconds": 2.52260419994127,
+      "process_peak_memory_mb": 982.798336,
+      "seconds": 13.5
+    }
+  ]
+}

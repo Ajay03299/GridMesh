@@ -1,0 +1,701 @@
+{
+  "quick": false,
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "config": {
+    "seed": 42,
+    "data": {
+      "path": "data/raw/wind.csv",
+      "timestamp_col": "auto",
+      "assumed_year": 2019,
+      "target_col": "WindSpeed_Class",
+      "power_col": null,
+      "site_col": null,
+      "task": "auto"
+    },
+    "target": {
+      "mode": "pv_from_irradiance",
+      "column": null,
+      "capacity": null,
+      "capacity_col": null,
+      "column_unit_mw": 1.0
+    },
+    "pv_model": {
+      "noct": 45.0,
+      "ref_irradiance": 1000.0,
+      "inverter_clip": 1.0
+    },
+    "split": {
+      "mode": "blocked_monthly",
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "features": {
+      "lookback": 6,
+      "horizon": 3,
+      "lagged": [
+        "pv",
+        "GHI",
+        "DNI",
+        "DHI",
+        "kt",
+        "Temperature"
+      ],
+      "current": [
+        "Relative Humidity",
+        "Pressure",
+        "Precipitable Water",
+        "Aerosol Optical Depth",
+        "Dew Point"
+      ],
+      "cloud_type_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "future_known": [
+        "Clearsky GHI",
+        "cos_zenith",
+        "hour_sin",
+        "hour_cos",
+        "doy_sin",
+        "doy_cos"
+      ],
+      "daytime_zenith_max": 85.0
+    },
+    "virtual_sites": {
+      "capacity_mw": [
+        5.0,
+        20.0
+      ],
+      "derate": [
+        0.8,
+        0.9
+      ],
+      "temp_coeff": [
+        -0.0045,
+        -0.0035
+      ],
+      "sensor_noise_std": [
+        0.0,
+        0.05
+      ],
+      "sensor_bias": [
+        -0.03,
+        0.03
+      ],
+      "missing_rate": [
+        0.0,
+        0.03
+      ],
+      "target_noise_std": [
+        0.0,
+        0.01
+      ],
+      "history_fraction": [
+        0.2,
+        1.0
+      ]
+    },
+    "model": {
+      "architecture": "mlp",
+      "cpu_threads": 1,
+      "lookback": 6,
+      "sequence_features": 6,
+      "target": "residual_smart_persistence",
+      "hidden": [
+        64,
+        64
+      ],
+      "lr": 0.001,
+      "batch_size": 256,
+      "epochs": 15,
+      "weight_decay": 0.0
+    },
+    "tree_models": {
+      "decision_tree": {
+        "max_depth": 8,
+        "min_samples_leaf": 30
+      },
+      "xgboost": {
+        "n_estimators": 600,
+        "learning_rate": 0.03,
+        "max_depth": 6,
+        "min_child_weight": 5,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "early_stopping_rounds": 40,
+        "n_jobs": 4
+      }
+    },
+    "paths": {
+      "outputs": "outputs"
+    },
+    "federated": {
+      "rounds": 20,
+      "local_epochs": 1,
+      "client_fraction": 1.0,
+      "min_clients": 2,
+      "max_clients_per_round": null,
+      "neighbourhood_size": 25,
+      "dropout_rate": 0.0,
+      "select_best": true
+    },
+    "reliability": {
+      "error_tolerance": 0.25,
+      "error_sharpness": 2.0,
+      "trust_ema": 0.5,
+      "quarantine_below": 0.2,
+      "use_data_quality": true
+    },
+    "safety": {
+      "max_update_norm_ratio": 8.0,
+      "rollback_val_ratio": 1.35,
+      "max_site_validation_rmse": 0.25,
+      "max_validation_bias": 0.1,
+      "max_baseline_rmse_ratio": 2.0,
+      "baseline_rmse_floor": 0.1,
+      "calibration_window": 72,
+      "calibration_tolerance": 0.03,
+      "fallback_chain": [
+        "last_trusted_model",
+        "local_model",
+        "smart_persistence"
+      ]
+    },
+    "event_aware": {
+      "drift_k": 2.0,
+      "window": 5,
+      "min_history": 3,
+      "min_rel_increase": 0.1,
+      "stable_participation": 0.5,
+      "heartbeat_bytes": 16
+    },
+    "faults": {
+      "start_round": 1,
+      "feature_corruption": {
+        "irradiance_scale": 0.6,
+        "noise_std": 0.25
+      },
+      "target_noise": {
+        "std": 0.1
+      },
+      "stale": {
+        "hold_steps": 12
+      },
+      "bias": {
+        "scale": 1.25
+      }
+    },
+    "reserve": {
+      "forecast_method": "reliability_fedavg",
+      "fixed_fraction": 0.2,
+      "delta": 0.05,
+      "delta_sweep": [
+        0.02,
+        0.05,
+        0.1
+      ],
+      "window": 36,
+      "empirical_window": 72,
+      "min_periods": 12,
+      "cost_reserve_per_mwh": 1.0,
+      "cost_shortfall_per_mwh": 20.0,
+      "peak_priority_weight": 2.0,
+      "grid_import_limit_mw": null,
+      "grid_import_limit_fraction": 0.9,
+      "backup_power_limit_mw": null,
+      "backup_power_fraction": 0.25,
+      "backup_energy_limit_mwh": null,
+      "backup_energy_hours": 4.0,
+      "demand": {
+        "base_mw_per_mw_capacity": 0.8,
+        "morning_peak": 0.25,
+        "evening_peak": 0.45,
+        "noise_std": 0.02
+      }
+    },
+    "experiments": {
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "fault_scenarios": [
+        {
+          "type": "target_noise",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "bias",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "feature_corruption",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "target_noise",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        }
+      ],
+      "severity_sweep": {
+        "type": "stale",
+        "sites": [
+          "D"
+        ],
+        "severities": [
+          0.5,
+          1,
+          2,
+          4
+        ]
+      },
+      "dropout_rates": [
+        0.25,
+        0.5
+      ]
+    },
+    "plots": {
+      "example_month": 7,
+      "fault_scenario": "fault_stale_CD"
+    }
+  },
+  "scenarios": [
+    {
+      "name": "healthy",
+      "faulty": [],
+      "fault": null,
+      "severity": 1,
+      "dropout": 0.0,
+      "fraction": 1.0
+    },
+    {
+      "name": "stale_50pct",
+      "faulty": [
+        2,
+        3
+      ],
+      "fault": "stale",
+      "severity": 2,
+      "dropout": 0.0,
+      "fraction": 1.0
+    },
+    {
+      "name": "biased_25pct",
+      "faulty": [
+        3
+      ],
+      "fault": "bias",
+      "severity": 2,
+      "dropout": 0.0,
+      "fraction": 1.0
+    },
+    {
+      "name": "dropout_50pct",
+      "faulty": [],
+      "fault": null,
+      "severity": 1,
+      "dropout": 0.5,
+      "fraction": 1.0
+    },
+    {
+      "name": "under_participation",
+      "faulty": [],
+      "fault": null,
+      "severity": 1,
+      "dropout": 0.25,
+      "fraction": 0.5
+    },
+    {
+      "name": "fault_and_dropout",
+      "faulty": [
+        3
+      ],
+      "fault": "stale",
+      "severity": 2,
+      "dropout": 0.25,
+      "fraction": 1.0
+    },
+    {
+      "name": "sensor_recovery",
+      "faulty": [
+        3
+      ],
+      "fault": "stale",
+      "severity": 2,
+      "dropout": 0.0,
+      "fraction": 1.0
+    },
+    {
+      "name": "seasonal_shift",
+      "faulty": [],
+      "fault": null,
+      "severity": 1,
+      "dropout": 0.0,
+      "fraction": 1.0
+    }
+  ],
+  "results": [
+    {
+      "seed": 42,
+      "scenario": "sensor_recovery",
+      "method": "fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.0644175383020708,
+      "healthy_rmse": 0.06424043552659782,
+      "worst_site_rmse": 0.06560836558859026,
+      "forecast_bias": 6.80320187964551e-05,
+      "participation_rate": 1.0,
+      "comm_mb": 7.62464,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 0,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 0,
+      "communication_availability": 1.0,
+      "runtime_seconds": 112.52488120005
+    },
+    {
+      "seed": 42,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06444606740059766,
+      "healthy_rmse": 0.06423591749212947,
+      "worst_site_rmse": 0.06570758288266272,
+      "forecast_bias": 0.0013775775863765084,
+      "participation_rate": 0.925,
+      "comm_mb": 7.052792,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 2,
+      "communication_availability": 1.0,
+      "runtime_seconds": 85.99876579991542
+    },
+    {
+      "seed": 42,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg_event",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06455785501899965,
+      "healthy_rmse": 0.06434966328051957,
+      "worst_site_rmse": 0.06586553339216795,
+      "forecast_bias": 0.005248923221814286,
+      "participation_rate": 0.4625,
+      "comm_mb": 3.527084,
+      "rejected_updates": 0,
+      "fallback_rounds": 9,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 2,
+      "communication_availability": 1.0,
+      "runtime_seconds": 50.610620499937795
+    },
+    {
+      "seed": 43,
+      "scenario": "sensor_recovery",
+      "method": "fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06348217463206177,
+      "healthy_rmse": 0.06320827408790566,
+      "worst_site_rmse": 0.06714021181935696,
+      "forecast_bias": -0.003529408106351184,
+      "participation_rate": 1.0,
+      "comm_mb": 7.62464,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 0,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 0,
+      "communication_availability": 1.0,
+      "runtime_seconds": 63.43922889989335
+    },
+    {
+      "seed": 43,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.0632346669490351,
+      "healthy_rmse": 0.06296723864800458,
+      "worst_site_rmse": 0.0665323323301927,
+      "forecast_bias": -0.003380898436180247,
+      "participation_rate": 0.925,
+      "comm_mb": 7.052792,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 2,
+      "communication_availability": 1.0,
+      "runtime_seconds": 62.95803259999957
+    },
+    {
+      "seed": 43,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg_event",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06358128522989308,
+      "healthy_rmse": 0.06306565865191809,
+      "worst_site_rmse": 0.06653885086222648,
+      "forecast_bias": -0.005899241017203077,
+      "participation_rate": 0.5,
+      "comm_mb": 3.81296,
+      "rejected_updates": 0,
+      "fallback_rounds": 8,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 5,
+      "communication_availability": 1.0,
+      "runtime_seconds": 38.824875400052406
+    },
+    {
+      "seed": 44,
+      "scenario": "sensor_recovery",
+      "method": "fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.0651379446361572,
+      "healthy_rmse": 0.06509661015684719,
+      "worst_site_rmse": 0.06888200143213033,
+      "forecast_bias": -0.004440179348902078,
+      "participation_rate": 1.0,
+      "comm_mb": 7.62464,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 0,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 0,
+      "communication_availability": 1.0,
+      "runtime_seconds": 86.88743739994243
+    },
+    {
+      "seed": 44,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06547793807953428,
+      "healthy_rmse": 0.06538370842597306,
+      "worst_site_rmse": 0.06877389176344698,
+      "forecast_bias": -0.005451421811015975,
+      "participation_rate": 0.9375,
+      "comm_mb": 7.1481,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 2,
+      "communication_availability": 1.0,
+      "runtime_seconds": 70.41508379997686
+    },
+    {
+      "seed": 44,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg_event",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06587374958519514,
+      "healthy_rmse": 0.06571557642937556,
+      "worst_site_rmse": 0.06867966675867296,
+      "forecast_bias": -0.005889814068047689,
+      "participation_rate": 0.5375,
+      "comm_mb": 4.098836,
+      "rejected_updates": 0,
+      "fallback_rounds": 5,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": null,
+      "communication_availability": 1.0,
+      "runtime_seconds": 38.92457169992849
+    },
+    {
+      "seed": 45,
+      "scenario": "sensor_recovery",
+      "method": "fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06477855238277752,
+      "healthy_rmse": 0.06394112568955097,
+      "worst_site_rmse": 0.06722827330738265,
+      "forecast_bias": -0.004033066879826857,
+      "participation_rate": 1.0,
+      "comm_mb": 7.62464,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 0,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 0,
+      "communication_availability": 1.0,
+      "runtime_seconds": 52.972895599901676
+    },
+    {
+      "seed": 45,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.0664345689894682,
+      "healthy_rmse": 0.06565018080208229,
+      "worst_site_rmse": 0.06873404621603008,
+      "forecast_bias": -0.006836909898699144,
+      "participation_rate": 0.925,
+      "comm_mb": 7.052792,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 2,
+      "communication_availability": 1.0,
+      "runtime_seconds": 49.481097399955615
+    },
+    {
+      "seed": 45,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg_event",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.0651875484756683,
+      "healthy_rmse": 0.06416758270292941,
+      "worst_site_rmse": 0.06815592340551596,
+      "forecast_bias": -0.009589602250505576,
+      "participation_rate": 0.4375,
+      "comm_mb": 3.3365,
+      "rejected_updates": 0,
+      "fallback_rounds": 11,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": null,
+      "communication_availability": 1.0,
+      "runtime_seconds": 19.36310149997007
+    },
+    {
+      "seed": 46,
+      "scenario": "sensor_recovery",
+      "method": "fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06285620324676411,
+      "healthy_rmse": 0.06250071834960777,
+      "worst_site_rmse": 0.06473127288582994,
+      "forecast_bias": -0.003369668234496416,
+      "participation_rate": 1.0,
+      "comm_mb": 7.62464,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 0,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 0,
+      "communication_availability": 1.0,
+      "runtime_seconds": 59.845603100024164
+    },
+    {
+      "seed": 46,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06281807395343778,
+      "healthy_rmse": 0.062432987568467165,
+      "worst_site_rmse": 0.06461700568699352,
+      "forecast_bias": 0.0005096732981770896,
+      "participation_rate": 0.9375,
+      "comm_mb": 7.1481,
+      "rejected_updates": 0,
+      "fallback_rounds": 0,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 2,
+      "communication_availability": 1.0,
+      "runtime_seconds": 50.32369880005717
+    },
+    {
+      "seed": 46,
+      "scenario": "sensor_recovery",
+      "method": "reliability_fedavg_event",
+      "rounds": 20,
+      "communication_model_transfers": 3,
+      "global_rmse": 0.06309492789942389,
+      "healthy_rmse": 0.06271036158489886,
+      "worst_site_rmse": 0.06497952462666096,
+      "forecast_bias": -0.0018254647463096757,
+      "participation_rate": 0.4625,
+      "comm_mb": 3.527084,
+      "rejected_updates": 0,
+      "fallback_rounds": 10,
+      "quarantined_sites": 1,
+      "drift_events": 0,
+      "dropped_events": 0,
+      "quarantine_weight_recovery_rounds": 5,
+      "communication_availability": 1.0,
+      "runtime_seconds": 27.852812899975106
+    }
+  ]
+}

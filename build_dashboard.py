@@ -64,9 +64,16 @@ def build(name, sc, base_cfg, out, n_clients):
                                         "total_comm_mb", "participation_rate")}
         if m != "smart_persistence":
             pd.DataFrame(res.history).to_csv(d / f"clients_{m}.csv", index=False)
+            res.extra["rounds"].to_csv(d / f"rounds_{m}.csv", index=False)
+        if m == OURS:
+            kpi["forecast_health"] = res.extra["forecast_health"]
+            rd = res.extra["rounds"]
+            kpi["safety"] = {"rejected_updates": int(rd.n_rejected.sum()),
+                             "fallback_rounds": int((rd.fallback != "").sum()),
+                             "rollback_rounds": int((rd.rollback_reason != "").sum())}
         runs = node_series(res, clients, cfg, seed)
         fixed_key = f"fixed_{int(round(cfg['reserve']['fixed_fraction'] * 100))}pct"
-        ns_key = f"nsigma_d{cfg['reserve']['delta']}"
+        ns_key = f"guarded_nsigma_d{cfg['reserve']['delta']}"
         if m == "smart_persistence":
             sp_forecast = runs[fixed_key][0][["time", "forecast_mw"]].rename(
                 columns={"forecast_mw": "forecast_sp_mw"})
@@ -75,7 +82,10 @@ def build(name, sc, base_cfg, out, n_clients):
             node = ns[["time", "split", "daytime", "capacity_mw", "forecast_mw", "actual_mw",
                        "demand_mw", "grid_import_mw", "expected_gap_mw",
                        "uncertainty_margin_mw", "required_backup_mw", "planned_gap_mw",
-                       "deficit_mw", "reserve_mw", "shortfall_mw", "mu_e", "sigma_e"]]
+                       "deficit_mw", "reserve_mw", "shortfall_mw", "mu_e", "sigma_e",
+                       "rolling_coverage", "calibration_samples", "calibration_age_minutes",
+                       "margin_source", "calibration_warning", "forecast_age_minutes",
+                       "forecast_warning"]]
             node = node.assign(reserve_fixed_mw=fx["reserve_mw"].to_numpy(),
                                shortfall_fixed_mw=fx["shortfall_mw"].to_numpy())
             kpi["reserve"] = {k: {x: v[1][x] for x in ("reserve_pct_of_forecast",

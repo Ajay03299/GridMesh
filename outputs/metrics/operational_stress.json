@@ -1,0 +1,710 @@
+{
+  "config": {
+    "seed": 42,
+    "data": {
+      "path": "data/raw/wind.csv",
+      "timestamp_col": "auto",
+      "assumed_year": 2019,
+      "target_col": "WindSpeed_Class",
+      "power_col": null,
+      "site_col": null,
+      "task": "auto"
+    },
+    "target": {
+      "mode": "pv_from_irradiance",
+      "column": null,
+      "capacity": null,
+      "capacity_col": null,
+      "column_unit_mw": 1.0
+    },
+    "pv_model": {
+      "noct": 45.0,
+      "ref_irradiance": 1000.0,
+      "inverter_clip": 1.0
+    },
+    "split": {
+      "mode": "blocked_monthly",
+      "train": 0.7,
+      "val": 0.15,
+      "test": 0.15
+    },
+    "features": {
+      "lookback": 6,
+      "horizon": 3,
+      "lagged": [
+        "pv",
+        "GHI",
+        "DNI",
+        "DHI",
+        "kt",
+        "Temperature"
+      ],
+      "current": [
+        "Relative Humidity",
+        "Pressure",
+        "Precipitable Water",
+        "Aerosol Optical Depth",
+        "Dew Point"
+      ],
+      "cloud_type_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "future_known": [
+        "Clearsky GHI",
+        "cos_zenith",
+        "hour_sin",
+        "hour_cos",
+        "doy_sin",
+        "doy_cos"
+      ],
+      "daytime_zenith_max": 85.0
+    },
+    "virtual_sites": {
+      "capacity_mw": [
+        5.0,
+        20.0
+      ],
+      "derate": [
+        0.8,
+        0.9
+      ],
+      "temp_coeff": [
+        -0.0045,
+        -0.0035
+      ],
+      "sensor_noise_std": [
+        0.0,
+        0.05
+      ],
+      "sensor_bias": [
+        -0.03,
+        0.03
+      ],
+      "missing_rate": [
+        0.0,
+        0.03
+      ],
+      "target_noise_std": [
+        0.0,
+        0.01
+      ],
+      "history_fraction": [
+        0.2,
+        1.0
+      ]
+    },
+    "model": {
+      "architecture": "mlp",
+      "cpu_threads": 1,
+      "lookback": 6,
+      "sequence_features": 6,
+      "target": "residual_smart_persistence",
+      "hidden": [
+        64,
+        64
+      ],
+      "lr": 0.001,
+      "batch_size": 256,
+      "epochs": 15,
+      "weight_decay": 0.0
+    },
+    "tree_models": {
+      "decision_tree": {
+        "max_depth": 8,
+        "min_samples_leaf": 30
+      },
+      "xgboost": {
+        "n_estimators": 600,
+        "learning_rate": 0.03,
+        "max_depth": 6,
+        "min_child_weight": 5,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "early_stopping_rounds": 40,
+        "n_jobs": 4
+      }
+    },
+    "paths": {
+      "outputs": "outputs"
+    },
+    "federated": {
+      "rounds": 20,
+      "local_epochs": 1,
+      "client_fraction": 1.0,
+      "min_clients": 2,
+      "max_clients_per_round": null,
+      "neighbourhood_size": 25,
+      "dropout_rate": 0.0,
+      "select_best": true
+    },
+    "reliability": {
+      "error_tolerance": 0.25,
+      "error_sharpness": 2.0,
+      "trust_ema": 0.5,
+      "quarantine_below": 0.2,
+      "use_data_quality": true
+    },
+    "safety": {
+      "max_update_norm_ratio": 8.0,
+      "rollback_val_ratio": 1.35,
+      "max_site_validation_rmse": 0.25,
+      "max_validation_bias": 0.1,
+      "max_baseline_rmse_ratio": 2.0,
+      "baseline_rmse_floor": 0.1,
+      "calibration_window": 72,
+      "calibration_tolerance": 0.03,
+      "fallback_chain": [
+        "last_trusted_model",
+        "local_model",
+        "smart_persistence"
+      ]
+    },
+    "event_aware": {
+      "drift_k": 2.0,
+      "window": 5,
+      "min_history": 3,
+      "min_rel_increase": 0.1,
+      "stable_participation": 0.5,
+      "heartbeat_bytes": 16
+    },
+    "faults": {
+      "start_round": 1,
+      "feature_corruption": {
+        "irradiance_scale": 0.6,
+        "noise_std": 0.25
+      },
+      "target_noise": {
+        "std": 0.1
+      },
+      "stale": {
+        "hold_steps": 12
+      },
+      "bias": {
+        "scale": 1.25
+      }
+    },
+    "reserve": {
+      "forecast_method": "reliability_fedavg",
+      "fixed_fraction": 0.2,
+      "delta": 0.05,
+      "delta_sweep": [
+        0.02,
+        0.05,
+        0.1
+      ],
+      "window": 36,
+      "empirical_window": 72,
+      "min_periods": 12,
+      "cost_reserve_per_mwh": 1.0,
+      "cost_shortfall_per_mwh": 20.0,
+      "peak_priority_weight": 2.0,
+      "grid_import_limit_mw": null,
+      "grid_import_limit_fraction": 0.9,
+      "backup_power_limit_mw": null,
+      "backup_power_fraction": 0.25,
+      "backup_energy_limit_mwh": null,
+      "backup_energy_hours": 4.0,
+      "demand": {
+        "base_mw_per_mw_capacity": 0.8,
+        "morning_peak": 0.25,
+        "evening_peak": 0.45,
+        "noise_std": 0.02
+      }
+    },
+    "experiments": {
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "fault_scenarios": [
+        {
+          "type": "target_noise",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "bias",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "feature_corruption",
+          "sites": [
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "target_noise",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        },
+        {
+          "type": "stale",
+          "sites": [
+            "C",
+            "D"
+          ],
+          "severity": 1
+        }
+      ],
+      "severity_sweep": {
+        "type": "stale",
+        "sites": [
+          "D"
+        ],
+        "severities": [
+          0.5,
+          1,
+          2,
+          4
+        ]
+      },
+      "dropout_rates": [
+        0.25,
+        0.5
+      ]
+    },
+    "plots": {
+      "example_month": 7,
+      "fault_scenario": "fault_stale_CD"
+    }
+  },
+  "seed": 42,
+  "results": [
+    {
+      "scenario": "healthy",
+      "policy": "fixed_20pct",
+      "delta": null,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.72,
+      "reserve_used_mwh": 203.55849171668638,
+      "shortfall_energy_mwh": 328.9599846895568,
+      "ens_pct_of_demand": 1.3394760806822323,
+      "mean_reserve_mw": 4.5457777777777775,
+      "reserve_pct_of_forecast": 24.00982768370596,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 4911.770944383097,
+      "planned_capacity_gap_mwh": 2538.4130311158756,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 76.48148148148148,
+      "target_availability_pct": null,
+      "cost_reserve": 2454.72,
+      "cost_shortfall": 6579.199693791135,
+      "total_cost": 9033.919693791135
+    },
+    {
+      "scenario": "healthy",
+      "policy": "nsigma_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 1622.2205897194494,
+      "reserve_used_mwh": 255.07009137618493,
+      "shortfall_energy_mwh": 277.44838503005826,
+      "ens_pct_of_demand": 1.1297285161366781,
+      "mean_reserve_mw": 3.004112203184166,
+      "reserve_pct_of_forecast": 15.867079269376488,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 2163.622849998934,
+      "planned_capacity_gap_mwh": 622.7643470122636,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 85.40123456790123,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 1622.2205897194494,
+      "cost_shortfall": 5548.967700601165,
+      "total_cost": 7171.188290320615
+    },
+    {
+      "scenario": "healthy",
+      "policy": "guarded_nsigma_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 1892.794501746474,
+      "reserve_used_mwh": 238.65453351356692,
+      "shortfall_energy_mwh": 293.86394289267633,
+      "ens_pct_of_demand": 1.1965702237345874,
+      "mean_reserve_mw": 3.5051750032342115,
+      "reserve_pct_of_forecast": 18.513586000683958,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 2924.8042676521054,
+      "planned_capacity_gap_mwh": 1113.3718526384102,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 83.76543209876543,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 1892.794501746474,
+      "cost_shortfall": 5877.2788578535265,
+      "total_cost": 7770.073359600001,
+      "margin_violation_rate": 0.058333333333333334,
+      "calibration_alert_intervals": 1231
+    },
+    {
+      "scenario": "healthy",
+      "policy": "empirical_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 1680.0635353897844,
+      "reserve_used_mwh": 253.1188753362456,
+      "shortfall_energy_mwh": 279.39960106999763,
+      "ens_pct_of_demand": 1.1376735773458972,
+      "mean_reserve_mw": 3.1112287692403418,
+      "reserve_pct_of_forecast": 16.43284610154582,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 2661.2340005589786,
+      "planned_capacity_gap_mwh": 1062.532551901973,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 84.96913580246913,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 1680.0635353897844,
+      "cost_shortfall": 5587.992021399952,
+      "total_cost": 7268.055556789736
+    },
+    {
+      "scenario": "common_cloud_shock",
+      "policy": "fixed_20pct",
+      "delta": null,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.72,
+      "reserve_used_mwh": 255.45195907053417,
+      "shortfall_energy_mwh": 2550.9048865810873,
+      "ens_pct_of_demand": 10.386904908496192,
+      "mean_reserve_mw": 4.5457777777777775,
+      "reserve_pct_of_forecast": 24.00982768370596,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 4911.770944383097,
+      "planned_capacity_gap_mwh": 2538.4130311158756,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 59.72222222222222,
+      "target_availability_pct": null,
+      "cost_reserve": 2454.72,
+      "cost_shortfall": 51018.09773162175,
+      "total_cost": 53472.81773162175
+    },
+    {
+      "scenario": "common_cloud_shock",
+      "policy": "nsigma_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.7199999999984,
+      "reserve_used_mwh": 315.13454810583704,
+      "shortfall_energy_mwh": 2491.222297545785,
+      "ens_pct_of_demand": 10.143886291744312,
+      "mean_reserve_mw": 4.545777777777776,
+      "reserve_pct_of_forecast": 24.00982768370595,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 8369.726992171205,
+      "planned_capacity_gap_mwh": 5996.3690789039865,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 61.08024691358025,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 2454.7199999999984,
+      "cost_shortfall": 49824.445950915695,
+      "total_cost": 52279.165950915696
+    },
+    {
+      "scenario": "common_cloud_shock",
+      "policy": "guarded_nsigma_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.7199999999984,
+      "reserve_used_mwh": 312.0745669308134,
+      "shortfall_energy_mwh": 2494.2822787208083,
+      "ens_pct_of_demand": 10.156346079505884,
+      "mean_reserve_mw": 4.545777777777776,
+      "reserve_pct_of_forecast": 24.00982768370595,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 9200.051376045289,
+      "planned_capacity_gap_mwh": 6826.693462778069,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 60.92592592592593,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 2454.7199999999984,
+      "cost_shortfall": 49885.645574416165,
+      "total_cost": 52340.365574416166,
+      "margin_violation_rate": 0.15679012345679014,
+      "calibration_alert_intervals": 3148
+    },
+    {
+      "scenario": "common_cloud_shock",
+      "policy": "empirical_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.7199999999984,
+      "reserve_used_mwh": 1024.7064222568188,
+      "shortfall_energy_mwh": 1781.650423394803,
+      "ens_pct_of_demand": 7.254615264305951,
+      "mean_reserve_mw": 4.545777777777776,
+      "reserve_pct_of_forecast": 24.00982768370595,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 10107.4775533178,
+      "planned_capacity_gap_mwh": 7734.119640050581,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 57.098765432098766,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 2454.7199999999984,
+      "cost_shortfall": 35633.00846789606,
+      "total_cost": 38087.728467896064
+    },
+    {
+      "scenario": "grid_import_reduced",
+      "policy": "fixed_20pct",
+      "delta": null,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.7199999999984,
+      "reserve_used_mwh": 2333.9036795547704,
+      "shortfall_energy_mwh": 2452.2792759444847,
+      "ens_pct_of_demand": 9.985316105787925,
+      "mean_reserve_mw": 4.545777777777776,
+      "reserve_pct_of_forecast": 24.00982768370595,
+      "expected_gap_energy_mwh": 4625.361548058306,
+      "uncertainty_margin_energy_mwh": 4911.770944383097,
+      "planned_capacity_gap_mwh": 7082.412492441404,
+      "grid_import_energy_mwh": 9709.67969073971,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 33.98148148148148,
+      "target_availability_pct": null,
+      "cost_reserve": 2454.7199999999984,
+      "cost_shortfall": 49045.5855188897,
+      "total_cost": 51500.3055188897
+    },
+    {
+      "scenario": "grid_import_reduced",
+      "policy": "nsigma_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.7199999999984,
+      "reserve_used_mwh": 2333.849550727359,
+      "shortfall_energy_mwh": 2452.3334047718954,
+      "ens_pct_of_demand": 9.98553651031421,
+      "mean_reserve_mw": 4.545777777777776,
+      "reserve_pct_of_forecast": 24.00982768370595,
+      "expected_gap_energy_mwh": 4625.361548058306,
+      "uncertainty_margin_energy_mwh": 2163.622849998934,
+      "planned_capacity_gap_mwh": 4334.264398057241,
+      "grid_import_energy_mwh": 9709.67969073971,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 34.50617283950617,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 2454.7199999999984,
+      "cost_shortfall": 49046.66809543791,
+      "total_cost": 51501.38809543791
+    },
+    {
+      "scenario": "grid_import_reduced",
+      "policy": "guarded_nsigma_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.7199999999984,
+      "reserve_used_mwh": 2310.197148081983,
+      "shortfall_energy_mwh": 2475.9858074172726,
+      "ens_pct_of_demand": 10.08184557241502,
+      "mean_reserve_mw": 4.545777777777776,
+      "reserve_pct_of_forecast": 24.00982768370595,
+      "expected_gap_energy_mwh": 4625.361548058306,
+      "uncertainty_margin_energy_mwh": 2924.8042676521054,
+      "planned_capacity_gap_mwh": 5095.445815710413,
+      "grid_import_energy_mwh": 9709.67969073971,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 34.660493827160494,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 2454.7199999999984,
+      "cost_shortfall": 49519.716148345455,
+      "total_cost": 51974.436148345456,
+      "margin_violation_rate": 0.058333333333333334,
+      "calibration_alert_intervals": 1231
+    },
+    {
+      "scenario": "grid_import_reduced",
+      "policy": "empirical_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 2454.7199999999984,
+      "reserve_used_mwh": 2343.2639047272487,
+      "shortfall_energy_mwh": 2442.919050772007,
+      "ens_pct_of_demand": 9.947202662476071,
+      "mean_reserve_mw": 4.545777777777776,
+      "reserve_pct_of_forecast": 24.00982768370595,
+      "expected_gap_energy_mwh": 4625.361548058306,
+      "uncertainty_margin_energy_mwh": 2661.2340005589786,
+      "planned_capacity_gap_mwh": 4831.875548617286,
+      "grid_import_energy_mwh": 9709.67969073971,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 51.14,
+      "availability_pct": 34.629629629629626,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 2454.7199999999984,
+      "cost_shortfall": 48858.381015440136,
+      "total_cost": 51313.10101544014
+    },
+    {
+      "scenario": "backup_depleted",
+      "policy": "fixed_20pct",
+      "delta": null,
+      "intervals": 3240,
+      "reserve_energy_mwh": 306.84000000000003,
+      "reserve_used_mwh": 60.87376851134204,
+      "shortfall_energy_mwh": 471.64470789490116,
+      "ens_pct_of_demand": 1.9204670300607365,
+      "mean_reserve_mw": 0.5682222222222224,
+      "reserve_pct_of_forecast": 3.0012284604632455,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 4911.770944383097,
+      "planned_capacity_gap_mwh": 4686.293031115875,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 6.3925,
+      "availability_pct": 61.75925925925926,
+      "target_availability_pct": null,
+      "cost_reserve": 306.84000000000003,
+      "cost_shortfall": 9432.894157898023,
+      "total_cost": 9739.734157898023
+    },
+    {
+      "scenario": "backup_depleted",
+      "policy": "nsigma_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 303.5988722721792,
+      "reserve_used_mwh": 59.14529759634257,
+      "shortfall_energy_mwh": 473.3731788099006,
+      "ens_pct_of_demand": 1.9275051062844497,
+      "mean_reserve_mw": 0.562220133837369,
+      "reserve_pct_of_forecast": 2.969526711080074,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 2163.622849998934,
+      "planned_capacity_gap_mwh": 1941.3860644595338,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 6.3925,
+      "availability_pct": 65.4320987654321,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 303.5988722721792,
+      "cost_shortfall": 9467.463576198012,
+      "total_cost": 9771.062448470191
+    },
+    {
+      "scenario": "backup_depleted",
+      "policy": "guarded_nsigma_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 306.84,
+      "reserve_used_mwh": 53.871483041550995,
+      "shortfall_energy_mwh": 478.6469933646922,
+      "ens_pct_of_demand": 1.9489792939634274,
+      "mean_reserve_mw": 0.5682222222222222,
+      "reserve_pct_of_forecast": 3.001228460463245,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 2924.8042676521054,
+      "planned_capacity_gap_mwh": 2699.3263543848843,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 6.3925,
+      "availability_pct": 61.66666666666667,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 306.84,
+      "cost_shortfall": 9572.939867293844,
+      "total_cost": 9879.779867293844,
+      "margin_violation_rate": 0.058333333333333334,
+      "calibration_alert_intervals": 1231
+    },
+    {
+      "scenario": "backup_depleted",
+      "policy": "empirical_d0.05",
+      "delta": 0.05,
+      "intervals": 3240,
+      "reserve_energy_mwh": 299.5028244980383,
+      "reserve_used_mwh": 70.24644816098055,
+      "shortfall_energy_mwh": 462.2720282452627,
+      "ens_pct_of_demand": 1.8823028739721606,
+      "mean_reserve_mw": 0.5546348601815524,
+      "reserve_pct_of_forecast": 2.9294629151109404,
+      "expected_gap_energy_mwh": 81.36208673277902,
+      "uncertainty_margin_energy_mwh": 2661.2340005589786,
+      "planned_capacity_gap_mwh": 2443.093262793719,
+      "grid_import_energy_mwh": 14253.679152065235,
+      "backup_power_limit_mw": 12.785,
+      "backup_energy_limit_mwh_per_day": 6.3925,
+      "availability_pct": 69.16666666666667,
+      "target_availability_pct": 95.0,
+      "cost_reserve": 299.5028244980383,
+      "cost_shortfall": 9245.440564905253,
+      "total_cost": 9544.943389403292
+    }
+  ],
+  "fallbacks": [
+    {
+      "scenario": "stale_inputs",
+      "source": "smart_persistence",
+      "reason": "stale_inputs",
+      "forecast_age_minutes": 0,
+      "operator_attention": true
+    },
+    {
+      "scenario": "expired_forecast",
+      "source": "smart_persistence",
+      "reason": "forecast_expired",
+      "forecast_age_minutes": 60,
+      "operator_attention": true
+    },
+    {
+      "scenario": "drift_alarm",
+      "source": "smart_persistence",
+      "reason": "drift_alarm",
+      "forecast_age_minutes": 0,
+      "operator_attention": true
+    },
+    {
+      "scenario": "invalid_prediction",
+      "source": "smart_persistence",
+      "reason": "invalid_or_missing_model",
+      "forecast_age_minutes": 0,
+      "operator_attention": true
+    }
+  ]
+}

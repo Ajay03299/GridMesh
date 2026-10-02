@@ -1,0 +1,25 @@
+seed,method,group,importance
+42,centralized_xgboost,Clear-sky information,0.03298288211226463
+42,centralized_xgboost,Cloud type,0.13071241485886276
+42,centralized_xgboost,Humidity,0.01649906486272812
+42,centralized_xgboost,Irradiance,0.43255013786256313
+42,centralized_xgboost,Other atmosphere,0.07480239681899548
+42,centralized_xgboost,Recent PV,0.08235872630029917
+42,centralized_xgboost,Solar position / calendar,0.10801989026367664
+42,centralized_xgboost,Temperature,0.12207443919032812
+42,decision_tree,Clear-sky information,0.16588043603085656
+42,decision_tree,Cloud type,0.054506417611590564
+42,decision_tree,Humidity,0.024824437123763067
+42,decision_tree,Irradiance,0.3563036875996587
+42,decision_tree,Other atmosphere,0.16754800069526418
+42,decision_tree,Recent PV,0.07733425118712599
+42,decision_tree,Solar position / calendar,0.10733111982944396
+42,decision_tree,Temperature,0.04627164992229696
+42,local_xgboost,Clear-sky information,0.02983645675703883
+42,local_xgboost,Cloud type,0.12535910197766498
+42,local_xgboost,Humidity,0.01821230538189411
+42,local_xgboost,Irradiance,0.4248934423085302
+42,local_xgboost,Other atmosphere,0.06838643038645387
+42,local_xgboost,Recent PV,0.09479541680775583
+42,local_xgboost,Solar position / calendar,0.10848357435315847
+42,local_xgboost,Temperature,0.1300332995597273

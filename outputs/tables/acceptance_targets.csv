@@ -1,0 +1,8 @@
+target,method,observed,unit,passed
+50% dropout <=2% RMSE degradation,fedavg,0.8522470258270465,relative percent,True
+50% dropout <=2% RMSE degradation,reliability_fedavg,0.5629382312199338,relative percent,True
+50% dropout <=2% RMSE degradation,reliability_fedavg_event,0.23069133968118827,relative percent,True
+100-site traffic reduction >=40%,event-aware,43.25890796155621,percent,True
+100-site accuracy degradation <=2%,event-aware,1.030417905198644,relative percent,True
+fault10: less healthy-site damage than FedAvg,reliability_fedavg,1.326087193762715,"damage difference, percentage points",False
+fault20: less healthy-site damage than FedAvg,reliability_fedavg,-0.7435707538898662,"damage difference, percentage points",True

@@ -174,7 +174,7 @@ unit per MWh scheduled and {rc['cost_shortfall_per_mwh']:g} units per MWh not se
 """ + _scaling_section(t) + """
 ## Plots
 """ + "\n".join(f"![{p}](plots/{p})" for p in plots) + "\n"
-    (out / "RESULTS.md").write_text(text)
+    (out / "RESULTS.md").write_text(text, encoding="utf-8")
     print(f"Saved {out / 'RESULTS.md'}")
 
 
