@@ -127,17 +127,15 @@ k[2].metric("Uncertainty (σ)", f"{now.sigma_e:.2f} MW")
 k[2].caption("std of the last 6 h of forecast errors")
 k[3].metric("Reliability risk", risk_label)
 k[3].caption(f"{risk:.0f}% of capacity at degraded sites")
-k[4].metric("Reserve recommendation", f"{now.reserve_mw:.1f} MW",
+k[4].metric("Backup recommendation", f"{now.reserve_mw:.1f} MW",
             f"{now.reserve_mw - now.reserve_fixed_mw:+.1f} MW vs fixed 20%", delta_color="inverse")
-k[4].caption(f"n-sigma rule, δ = {kpi['delta']}")
+k[4].caption(f"expected gap + n-sigma margin, δ = {kpi['delta']}")
 
 # ------------------------------------------------------------------ middle
 x = today.time
 c1, c2 = st.columns(2)
 with c1:
     f, ax = fig()
-    ax.fill_between(x, (today.forecast_mw - today.reserve_mw).clip(lower=0), today.forecast_mw,
-                    color=BLUE, alpha=0.15, lw=0, label="covered by n-sigma reserve")
     ax.plot(x, today.actual_mw, color=INK, lw=1.5, label="actual")
     ax.plot(x, today.forecast_sp_mw, color=MUTED, lw=1, label="smart persistence")
     ax.plot(x, today.forecast_mw, color=BLUE, lw=1.8, label="GridMesh forecast")
@@ -149,13 +147,18 @@ with c1:
     st.pyplot(f, clear_figure=True)
 with c2:
     f, ax = fig()
-    ax.fill_between(x, 0, today.deficit_mw, color=GRID, step="mid", label="shortfall to cover")
-    ax.plot(x, today.reserve_fixed_mw, color=ORANGE, lw=1.5, label="fixed 20% reserve")
-    ax.plot(x, today.reserve_mw, color=BLUE, lw=1.8, label=f"n-sigma reserve (δ={kpi['delta']})")
+    ax.fill_between(x, 0, today.deficit_mw, color=GRID, step="mid", label="realised net deficit")
+    ax.plot(x, today.expected_gap_mw, color=MUTED, lw=1.2, label="expected gap")
+    ax.plot(x, today.reserve_fixed_mw, color=ORANGE, lw=1.5, label="fixed-margin schedule")
+    ax.plot(x, today.reserve_mw, color=BLUE, lw=1.8,
+            label=f"constrained n-sigma schedule (δ={kpi['delta']})")
     miss = today.shortfall_mw > 1e-9
     ax.scatter(x[miss], today.deficit_mw[miss], s=12, color=FAULT, zorder=3, label="not covered")
     ax.axvline(now.time, color=AXIS, lw=1)
-    ax.set(ylabel="MW", title="Reserve over the day")
+    infeasible = today.planned_gap_mw > 1e-9
+    ax.scatter(x[infeasible], today.required_backup_mw[infeasible], s=20, marker="x",
+               color=FAULT, zorder=4, label="capacity warning")
+    ax.set(ylabel="MW", title="Expected gap, uncertainty and backup schedule")
     ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%H:%M"))
     _style(ax)
     ax.legend(fontsize=7, loc="upper left")

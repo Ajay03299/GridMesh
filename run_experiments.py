@@ -182,7 +182,8 @@ def main():
     res = pd.DataFrame(R.reserve_rows)
     res.to_csv(out / "tables" / "exp_reserve_runs.csv", index=False)
     res_t = mean_std(res, ["forecast", "policy"], [
-        "reserve_energy_mwh", "shortfall_energy_mwh", "reserve_pct_of_forecast",
+        "expected_gap_energy_mwh", "uncertainty_margin_energy_mwh", "reserve_energy_mwh",
+        "planned_capacity_gap_mwh", "shortfall_energy_mwh", "reserve_pct_of_forecast",
         "ens_pct_of_demand", "availability_pct", "total_cost", "cost_reserve", "cost_shortfall"])
     res_t.to_csv(out / "tables" / "reserve_comparison.csv", index=False)
 

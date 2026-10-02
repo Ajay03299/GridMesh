@@ -27,8 +27,9 @@ from src.federated.fedavg import weighted_average
 from src.federated.reliability_aware import ReliabilityAwareFedAvg
 from src.federated.server import METADATA_BYTES, run_federated
 from src.reliability.drift import DriftDetector
-from src.reserve.reserve_policy import nsigma_reserve
-from src.reserve.simulator import simulate
+from src.reserve.reserve_policy import empirical_reserve, nsigma_reserve
+from src.reserve.simulator import schedule_backup, simulate
+from src.models.forecasting_model import build_model
 
 RESULTS = []
 
@@ -130,6 +131,17 @@ def _():
     cs_now, cs_fut = np.array([200., 500., 800.]), np.array([300., 600., 700.])
     pred = smart_persistence(0.0008 * cs_now, cs_now, cs_fut)
     assert np.allclose(pred, 0.0008 * cs_fut, atol=1e-6)
+
+
+@check("models: MLP, GRU and LSTM accept the same feature vector")
+def _():
+    n_features = CLIENTS[0].train.X.shape[1]
+    for architecture in ("mlp", "gru", "lstm"):
+        mcfg = copy.deepcopy(CFG["model"])
+        mcfg["architecture"] = architecture
+        model = build_model(n_features, mcfg, SEED)
+        out = model(__import__("torch").from_numpy(CLIENTS[0].train.X[:8]))
+        assert tuple(out.shape) == (8,) and np.isfinite(out.detach().numpy()).all()
 
 
 @check("FedAvg: aggregation is the exact weighted average")
@@ -258,11 +270,41 @@ def _():
         r, mu, sd = nsigma_reserve(node, dlt, 36, 12, 3)
         i = 500
         assert abs(r[i] - max(norm.ppf(1 - dlt) * sd[i] - mu[i], 0)) < 1e-9
-        _, s = simulate(node, r, CFG["reserve"], "ns", dlt)
-        cov = s["availability_pct"]
+        known = np.isfinite(mu) & np.isfinite(sd)
+        short = (node["actual_mw"].to_numpy() - node["forecast_mw"].to_numpy()) < -r
+        cov = 100 * (1 - short[known].mean())
         assert abs(cov - 100 * (1 - dlt)) < 1.5, (dlt, cov)
         out.append(f"{100 * (1 - dlt):.0f}%->{cov:.1f}%")
     return "target->achieved " + ", ".join(out)
+
+
+@check("reserve: empirical margin is causal and uses an observed tail value")
+def _():
+    node = _synthetic_node(n_days=10, seed=3)
+    r1, q1 = empirical_reserve(node, 0.10, 72, 12, 3)
+    node2 = node.copy()
+    node2.loc[300:, "actual_mw"] -= 20
+    r2, _ = empirical_reserve(node2, 0.10, 72, 12, 3)
+    assert np.allclose(r1[:303], r2[:303], equal_nan=True)
+    i = np.where(np.isfinite(q1))[0][0]
+    past_loss = (node["forecast_mw"] - node["actual_mw"]).shift(3).iloc[:i + 1].dropna().tail(72)
+    assert any(abs(q1[i] - x) < 1e-12 for x in past_loss)
+
+
+@check("scheduler: expected gap, power cap and daily energy cap are enforced")
+def _():
+    t = pd.date_range("2019-06-01 06:00", periods=12, freq="10min")
+    node = pd.DataFrame({"time": t, "split": "test", "daytime": True, "block": 0,
+                         "capacity_mw": 10.0, "forecast_mw": 2.0, "actual_mw": 1.0,
+                         "demand_mw": 10.0})
+    rcfg = copy.deepcopy(CFG["reserve"])
+    rcfg.update(grid_import_limit_mw=3.0, backup_power_limit_mw=4.0,
+                backup_energy_limit_mwh=2.0)
+    d = schedule_backup(node, np.ones(len(node)), rcfg)
+    assert np.allclose(d["expected_gap_mw"], 5.0)
+    assert (d["scheduled_backup_mw"] <= 4.0 + 1e-9).all()
+    assert d["scheduled_backup_mw"].sum() * (10 / 60) <= 2.0 + 1e-8
+    assert (d["planned_gap_mw"] > 0).any()
 
 
 @check("real data path: measured power column + site-ID column -> one client per site")

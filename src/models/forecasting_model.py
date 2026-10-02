@@ -1,5 +1,4 @@
-"""Compact MLP forecaster + training helpers shared by every method
-(local-only, centralized, FedAvg, reliability-aware FedAvg)."""
+"""Interchangeable MLP, GRU and LSTM forecasters used by every training method."""
 import copy
 
 import numpy as np
@@ -26,9 +25,45 @@ class MLPForecaster(nn.Module):
         return self.net(x).squeeze(-1)
 
 
+class RecurrentForecaster(nn.Module):
+    """Encode lagged variables as a sequence, then add issue-time/static features."""
+    def __init__(self, n_features, hidden, lookback, sequence_features, cell="gru"):
+        super().__init__()
+        self.lookback = int(lookback)
+        self.sequence_features = int(sequence_features)
+        self.sequence_width = self.lookback * self.sequence_features
+        if self.sequence_width > n_features:
+            raise ValueError("lookback * sequence_features exceeds the feature vector width")
+        rnn_cls = nn.GRU if cell == "gru" else nn.LSTM
+        recurrent_hidden = int(hidden[0])
+        self.rnn = rnn_cls(self.sequence_features, recurrent_hidden, batch_first=True)
+        static_width = n_features - self.sequence_width
+        head_hidden = int(hidden[1] if len(hidden) > 1 else recurrent_hidden)
+        self.head = nn.Sequential(
+            nn.Linear(recurrent_hidden + static_width, head_hidden), nn.ReLU(),
+            nn.Linear(head_hidden, 1))
+
+    def forward(self, x):
+        # Feature construction is variable-major: [v1_lag0..L, v2_lag0..L, ...].
+        seq = x[:, :self.sequence_width].reshape(
+            -1, self.sequence_features, self.lookback).transpose(1, 2)
+        out = self.rnn(seq)
+        hidden = out[1][0] if isinstance(out[1], tuple) else out[1]
+        encoded = hidden[-1]
+        static = x[:, self.sequence_width:]
+        return self.head(torch.cat([encoded, static], dim=1)).squeeze(-1)
+
+
 def build_model(n_features, mcfg, seed):
     torch.manual_seed(seed)
-    return MLPForecaster(n_features, tuple(mcfg["hidden"]))
+    architecture = mcfg.get("architecture", "mlp").lower()
+    hidden = tuple(mcfg["hidden"])
+    if architecture == "mlp":
+        return MLPForecaster(n_features, hidden)
+    if architecture in ("gru", "lstm"):
+        return RecurrentForecaster(
+            n_features, hidden, mcfg["lookback"], mcfg["sequence_features"], architecture)
+    raise ValueError(f"Unknown model architecture '{architecture}'")
 
 
 # ---- parameter exchange (what federated clients send / receive) ----

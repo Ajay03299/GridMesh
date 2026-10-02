@@ -46,6 +46,8 @@ def parse_args():
     ap.add_argument("--split", choices=["blocked_monthly", "chronological"], default=None,
                     help="override split.mode (chronological = seasonal-shift stress test)")
     ap.add_argument("--tag", default=None, help="name for this run's output files")
+    ap.add_argument("--architecture", choices=["mlp", "gru", "lstm"], default=None,
+                    help="override model.architecture")
     return ap.parse_args()
 
 
@@ -91,6 +93,8 @@ def _run(name, clients, cfg, seed, faulty=None, verbose=True):
 def main():
     args = parse_args()
     cfg = load_config(args.config)
+    if args.architecture:
+        cfg["model"]["architecture"] = args.architecture
     if args.split:
         cfg["split"]["mode"] = args.split
     for key, val in (("rounds", args.rounds), ("dropout_rate", args.dropout_rate),
@@ -103,7 +107,8 @@ def main():
     faulty = parse_sites(args.faulty_client, args.clients, args.faulty_frac, seed)
     set_seed(seed)
     methods = [m for part in args.methods.split(",") for m in METHOD_GROUPS.get(part, [part])]
-    tag = args.tag or (f"c{args.clients}_{cfg['split']['mode']}"
+    arch_suffix = "" if cfg["model"]["architecture"] == "mlp" else f"_{cfg['model']['architecture']}"
+    tag = args.tag or (f"c{args.clients}_{cfg['split']['mode']}{arch_suffix}"
                        + (f"_fault{len(faulty)}-{args.fault_type}-s{args.fault_severity:g}"
                           if faulty else "")
                        + (f"_drop{cfg['federated']['dropout_rate']}"
