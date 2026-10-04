@@ -68,8 +68,10 @@ focuses on cross-owner federated forecasting, unreliable-client handling and tra
 advice for smaller portfolios. It is positioned as a module that could integrate after validation.
 
 **Is the affordability number proven?**  
-No. ₹46.50 per household per month is an illustrative software-service budget at 100 households. It
-excludes hardware and energy. A pilot must validate costs, benefit and willingness to pay.
+No. The unsupported ₹46.50 allocation is withdrawn. Itemised covered costs estimate
+about ₹153/home/month at100 payers (base), excluding unquoted retrofit/access and
+energy changes. This is cost recovery, not a validated affordable price. Refer to
+docs/AFFORDABILITY.md for assumptions, sources, sensitivities and missing agreements.
 
 ## What not to claim
 

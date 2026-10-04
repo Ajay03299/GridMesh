@@ -5,7 +5,7 @@ GridMesh separates two decisions that are often mixed together:
 1. **How much forecast uncertainty should be covered?**
 2. **How should limited backup resources be scheduled?**
 
-That separation keeps the implementation faithful to Khaing, Kannan & Rao (2026) while making the
+That separation follows the forecasting-to-operations question studied by Khaing, Kannan & Rao (2026), while making the
 operational step auditable and small enough for a feeder-level hackathon prototype.
 
 ## 1. Causal uncertainty margin
@@ -19,7 +19,8 @@ m_t = \max\{\Phi^{-1}(1-\delta)\sigma_{e,t}-\mu_{e,t},0\}.
 \]
 
 This is an **uncertainty margin**, not the complete backup schedule. The Gaussian rule is inspired
-by Theorem 4.3 of the paper. Real weather errors need not be Gaussian, so GridMesh reports realized
+by the Gaussian lower-tail calculation and the paper's reserve-planning motivation. This project
+does not reproduce the paper's full optimal-power-flow system. Real weather errors need not be Gaussian, so GridMesh reports realized
 availability instead of promising the nominal target. An empirical rolling tail-quantile policy is
 implemented as a second benchmark without a Gaussian shape assumption. Autocorrelation means
 it does not provide a distribution-free finite-sample coverage guarantee.
@@ -57,6 +58,12 @@ scarce, \(c_{u,t}\) increases with the normalized requirement so the LP serves t
 intervals first; the priority strength is configurable. The planned-gap variable keeps infeasible
 operating conditions visible rather than silently clipping them. The prototype solves this linear
 program with SciPy HiGHS.
+
+The separate Indian-hourly protocol sets `peak_priority_weight: 0`, so the gap
+coefficient is constant (20 assumed units/MWh) for every model and policy.
+`grid_dispatch_mode: fixed_availability` fixes grid power independently of the
+forecast. `step_hours: 1` makes both the daily budget and reported MWh consistent
+with hourly NASA data. Legacy defaults remain unchanged to reproduce old results.
 
 The LP allocates the entire day's sequence of rolling forecasts retrospectively. Although each
 uncertainty estimate is causal, this is not a deployable day-ahead forecast plan. Operational use

@@ -1,0 +1,166 @@
+{
+  "protocol": "India hourly v1",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "n_sites": 100,
+  "horizon_minutes": 60,
+  "rounds": 12,
+  "max_clients_per_round": 20,
+  "models": [
+    {
+      "model": "gru",
+      "rmse": 0.07344552945932958,
+      "rmse_sd": 0.011011731532690885,
+      "mae": 0.04549766120563471
+    },
+    {
+      "model": "lstm",
+      "rmse": 0.07472250003703673,
+      "rmse_sd": 0.014076665915855834,
+      "mae": 0.046980732612251865
+    },
+    {
+      "model": "mlp",
+      "rmse": 0.05242599761561262,
+      "rmse_sd": 0.0012294323547065154,
+      "mae": 0.03371483532590404
+    }
+  ],
+  "operations": [
+    {
+      "model": "gru",
+      "policy": "fixed_20pct",
+      "fully_supplied_pct": 98.68913857677902,
+      "ens_mwh": 0.16420079129173254,
+      "backup_mwh": 23.8047648,
+      "cost_score": 27.08878062583465,
+      "planned_uncovered_mwh": 25.33601218144266
+    },
+    {
+      "model": "gru",
+      "policy": "nsigma_d0.05",
+      "fully_supplied_pct": 96.59176029962546,
+      "ens_mwh": 0.5827263063987427,
+      "backup_mwh": 20.055302927315882,
+      "cost_score": 31.709829055290736,
+      "planned_uncovered_mwh": 7.762741598086362
+    },
+    {
+      "model": "lstm",
+      "policy": "fixed_20pct",
+      "fully_supplied_pct": 98.61423220973782,
+      "ens_mwh": 0.18090180924789595,
+      "backup_mwh": 23.8047648,
+      "cost_score": 27.422800984957924,
+      "planned_uncovered_mwh": 25.298782982583965
+    },
+    {
+      "model": "lstm",
+      "policy": "nsigma_d0.05",
+      "fully_supplied_pct": 96.51685393258427,
+      "ens_mwh": 0.515698369869036,
+      "backup_mwh": 19.74227301713198,
+      "cost_score": 30.0562404145127,
+      "planned_uncovered_mwh": 7.090898244557636
+    },
+    {
+      "model": "mlp",
+      "policy": "fixed_20pct",
+      "fully_supplied_pct": 98.46441947565543,
+      "ens_mwh": 0.20504401185273843,
+      "backup_mwh": 23.8047648,
+      "cost_score": 27.905645037054775,
+      "planned_uncovered_mwh": 25.184550757537
+    },
+    {
+      "model": "mlp",
+      "policy": "nsigma_d0.05",
+      "fully_supplied_pct": 97.60299625468164,
+      "ens_mwh": 0.26891492187449073,
+      "backup_mwh": 18.262155545730415,
+      "cost_score": 23.640453983220233,
+      "planned_uncovered_mwh": 2.85083871694994
+    }
+  ],
+  "limitations": [
+    "one NASA POWER weather record, modeled PV, synthetic demand, assumed assets",
+    "100 heterogeneous sites are emulated in one process; no secure aggregation",
+    "retrospective per-day LP replay, not an online day-ahead dispatch trial",
+    "daytime test intervals only, not annual uptime or measured outage hours",
+    "hourly gridded weather, not independent measured Indian PV sites"
+  ],
+  "metrics": "daytime test error in p.u. nameplate; RMSE and MAE as percent = 100*p.u.",
+  "planning_vs_realized": "u is uncovered planned requirement; realised ENS uses actual solar",
+  "cost_units": "assumed units, backup coefficient 1 and unserved coefficient 20; not rupees",
+  "legacy_reproduction": {
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "legacy_mlp_test_rmse_pct": 6.398251180012138,
+    "legacy_pooled_xgboost_validation_rmse_pct": 6.1195943504571915,
+    "healthy_error_reduction_stale_pct": 8.887932607611383,
+    "dropout_relative_error_increase_pct": 0.562938231219956,
+    "scale_payload_reduction_pct": 43.25890796155621,
+    "scale_relative_error_increase_pct": 1.0304179051985551,
+    "reserve": [
+      {
+        "policy": "fixed_20pct",
+        "seed": 44.0,
+        "delta": null,
+        "intervals": 3240.0,
+        "reserve_energy_mwh": 2420.64,
+        "reserve_used_mwh": 209.75877914141626,
+        "shortfall_energy_mwh": 310.00898112549277,
+        "ens_pct_of_demand": 1.2798422638048823,
+        "mean_reserve_mw": 4.482666666666667,
+        "reserve_pct_of_forecast": 24.15919889617623,
+        "expected_gap_energy_mwh": 78.9273795204087,
+        "uncertainty_margin_energy_mwh": 4844.003092226323,
+        "planned_capacity_gap_mwh": 2502.290471746732,
+        "grid_import_energy_mwh": 14141.82659104811,
+        "backup_power_limit_mw": 12.6075,
+        "backup_energy_limit_mwh_per_day": 50.43,
+        "availability_pct": 79.88271604938271,
+        "target_availability_pct": null,
+        "cost_reserve": 2420.64,
+        "cost_shortfall": 6200.179622509854,
+        "total_cost": 8620.819622509855,
+        "planning_objective_score": 114566.93737893319
+      },
+      {
+        "policy": "nsigma_d0.05",
+        "seed": 44.0,
+        "delta": 0.05,
+        "intervals": 3240.0,
+        "reserve_energy_mwh": 1575.5243041367235,
+        "reserve_used_mwh": 241.6696655140348,
+        "shortfall_energy_mwh": 278.09809475287415,
+        "ens_pct_of_demand": 1.1490971515261639,
+        "mean_reserve_mw": 2.9176376002531916,
+        "reserve_pct_of_forecast": 15.700132559520853,
+        "expected_gap_energy_mwh": 78.9273795204087,
+        "uncertainty_margin_energy_mwh": 2072.1997988786015,
+        "planned_capacity_gap_mwh": 575.602874262287,
+        "grid_import_energy_mwh": 14141.82659104811,
+        "backup_power_limit_mw": 12.6075,
+        "backup_energy_limit_mwh_per_day": 50.43,
+        "availability_pct": 85.16666666666667,
+        "target_availability_pct": 95.0,
+        "cost_reserve": 1575.5243041367235,
+        "cost_shortfall": 5561.961895057483,
+        "total_cost": 7137.486199194206,
+        "planning_objective_score": 23907.12077181444
+      }
+    ],
+    "limitations": "Legacy 4-site unknown-location 10-minute weather. Scaling repeats data. Not Indian measurement validation."
+  }
+}

@@ -29,6 +29,10 @@ apply_theme(colors, dark_mode)
 INK, MUTED, GRID, AXIS = colors["ink"], colors["muted"], colors["grid"], colors["grid"]
 SURFACE, FAULT = colors["surface"], colors["fault"]
 BLUE, ORANGE, HEALTHY_GREYS = colors["blue"], colors["orange"], colors["healthy"]
+if st.sidebar.checkbox("Deterministic advisory demo", value=False):
+    from src.visualization.advisory_demo import render_demo
+    render_demo()
+    st.stop()
 cfg = load_config()
 ROOT = Path(cfg["paths"]["outputs"]) / "dashboard"
 if not (ROOT / "normal" / "kpi.json").exists():
@@ -137,7 +141,30 @@ k[3].metric("Reliability risk", risk_label)
 k[3].caption(f"{risk:.0f}% of capacity at degraded sites")
 k[4].metric("Backup recommendation", f"{now.reserve_mw:.1f} MW",
             f"{now.reserve_mw - now.reserve_fixed_mw:+.1f} MW vs fixed 20%", delta_color="inverse")
-k[4].caption(f"expected gap + n-sigma margin, δ = {kpi['delta']}")
+k[4].caption(f"constrained scheduled backup; required reserve = expected gap + margin, δ = {kpi['delta']}")
+
+# Explain the existing retrospective replay without pretending it is live control.
+from src.reserve.simulator import _asset_limits
+from src.reserve.online import advice
+_, replay_power, replay_energy = _asset_limits(today, cfg['reserve'])
+replay_power = float(now.get('backup_power_limit_mw', replay_power))
+replay_energy = float(now.get('backup_energy_limit_mwh', replay_energy))
+replay_dt = float(now.get('step_hours', cfg['reserve'].get('step_hours', 10/60)))
+remaining = max(replay_energy-float(today.iloc[:i_now].reserve_mw.sum())*replay_dt, 0.)
+st.subheader('What the operator can decide')
+op = st.columns(4)
+op[0].metric('Expected shortfall', f'{now.expected_gap_mw:.2f} MW')
+op[1].metric('Required reserve', f'{now.required_backup_mw:.2f} MW')
+op[2].metric('Backup power cap', f'{replay_power:.2f} MW')
+op[3].metric('Planned uncovered reserve', f'{now.planned_gap_mw:.2f} MW')
+st.caption(f'Remaining scheduled-energy budget before this interval: {remaining:.2f} MWh. '
+           f'Forecast age: {now.get("forecast_age_minutes", 0):.0f} minutes. '
+           'Generic dispatchable backup assumed; technology and physical access unconfirmed. '
+           'Historical full-day plan, not a live recommendation.')
+explanation = advice(dict(now, scheduled_backup_mw=now.reserve_mw))
+st.info(explanation['reason']+' '+explanation['action'])
+if explanation['operator_attention']:
+    st.warning('Stale/unreliable inputs: refresh site data before approving advice.')
 
 # ------------------------------------------------------------------ middle
 x = today.time

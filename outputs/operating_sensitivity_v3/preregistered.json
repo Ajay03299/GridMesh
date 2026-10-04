@@ -1,0 +1,128 @@
+{
+  "config": {
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "method": "reliability_fedavg",
+    "target_validation_availability_pct": 99.0,
+    "scenarios": {
+      "normal": {},
+      "demand_error": {
+        "demand_bias": 0.05,
+        "demand_std": 0.1
+      },
+      "grid_uncertainty": {
+        "grid_loss_fraction": 0.5,
+        "event_every": 6
+      },
+      "backup_derated": {
+        "known_power_factor": 0.7
+      },
+      "backup_unavailable": {
+        "delivery_loss_fraction": 1.0,
+        "event_every": 8
+      },
+      "half_daily_energy": {
+        "known_energy_factor": 0.5
+      },
+      "stale_forecast": {
+        "stale_every": 6
+      },
+      "cloud_burst": {
+        "solar_loss_fraction": 0.35,
+        "event_every": 6
+      }
+    },
+    "joint_margin": {
+      "window": 24,
+      "min_periods": 6,
+      "quantiles": [
+        0.9,
+        0.95,
+        0.99
+      ],
+      "stale_safety_bound": true
+    }
+  },
+  "candidates": [
+    "fixed_20pct",
+    "fixed_10pct",
+    "fixed_15pct",
+    "nominal_05",
+    "joint_0.9",
+    "joint_0.95",
+    "joint_0.99"
+  ],
+  "source_hashes": {
+    "outputs\\evidence_improvement\\config.yaml": "6ca00d2b68556288b9c6a0d9852bd8596290dc364dde6c6a53fe92bcff4bb7e2",
+    "outputs\\evidence_improvement\\experiment.yaml": "13413f60269f28d07cabd5c28b352e1599cc2f91d9ab1f8e36f94a4af29eaea0",
+    "outputs\\evidence_improvement\\failure_smoke.csv": "a3ebcb76600ee8c647945f0968e7fcbb9226667905c92e4251d3449136877d11",
+    "outputs\\evidence_improvement\\FINDINGS.md": "2a25b3488b6c30c958f118c846af0856199ae387a9d690ea2e0630ceb99a2076",
+    "outputs\\evidence_improvement\\forecast_results.csv": "4ef7204d0a97fa33a5680cbb5f5e1e221fb4619a1071f24eac876b3e13b885e5",
+    "outputs\\evidence_improvement\\manifest.json": "b12c54762af8dc3f4b00e130071cbd9e34c5f2e1ac2e431211b30bbfc12e7fcc",
+    "outputs\\evidence_improvement\\node_42_fedavg.csv": "46c8c64df3b2eaa68f47d715b39d365bde55312de81db9b8b38b51006ced2980",
+    "outputs\\evidence_improvement\\node_42_local_only.csv": "098b54687eb09ec41d3989eec58875347ed07e43b4c94ca93064adfbcb942677",
+    "outputs\\evidence_improvement\\node_42_persistence.csv": "53e8b2b6ce806db11f7cffd9bf4134cb57b703c1164faa5b2454ac5bfef5a520",
+    "outputs\\evidence_improvement\\node_42_reliability_fedavg.csv": "35d5cd797363c87233413d03a7ca58adfa79e7c1c8b49daf952f7b52abe7558d",
+    "outputs\\evidence_improvement\\node_42_reliability_fedavg_event.csv": "dda727bc584a8576aac354dca953b0e82e1d6774016c8fe39190f236630b1dae",
+    "outputs\\evidence_improvement\\node_42_smart_persistence.csv": "cb23e54b5aed622bae8d73d03d3d7a3ba60216906363c948f571dc22ad9cf174",
+    "outputs\\evidence_improvement\\node_43_fedavg.csv": "cc97e187b93a36d83dcbf0defe52bf48f89f18982a3b65424a20a52678524bf9",
+    "outputs\\evidence_improvement\\node_43_local_only.csv": "ba507b4f676bf1d09343c27da647c1621ef5212c80559d315418c9032fb4cd54",
+    "outputs\\evidence_improvement\\node_43_persistence.csv": "cf4e7e5c6d4d1776acdac1838dd1606205a620e0ecbc565b1092f6df44ddf15e",
+    "outputs\\evidence_improvement\\node_43_reliability_fedavg.csv": "98366a9de03d6cdae4384c2081d93a12b471d83709cdd49af53aa78254afb2ca",
+    "outputs\\evidence_improvement\\node_43_reliability_fedavg_event.csv": "f364a03932049b1ea61590535072eda0f0a316a95523fb7710f8b2dc6b2e8bb7",
+    "outputs\\evidence_improvement\\node_43_smart_persistence.csv": "954bb0ddbd717f4b621ac41a8df8c208a0ca36a144018a1d74cc49faacff7e72",
+    "outputs\\evidence_improvement\\node_44_fedavg.csv": "d84686aebf92c678ba1e7460302eef618a1dce29595971dce09fc78c67687e77",
+    "outputs\\evidence_improvement\\node_44_local_only.csv": "24e46ce7fcf4651c64d8d679e524da0262f170511a4a349890afb08a8ae17f35",
+    "outputs\\evidence_improvement\\node_44_persistence.csv": "95d389d83dddc0e63be9b7a16f80f912b41ce51fbd68c87be5e1f0902ccdf24f",
+    "outputs\\evidence_improvement\\node_44_reliability_fedavg.csv": "e547cba59a3cbccbd6f4c8a30170386acff91f728729c349f2c93fe0b1659705",
+    "outputs\\evidence_improvement\\node_44_reliability_fedavg_event.csv": "893be46909f78069a290c2163beb386d296f99f07fc070c7de1fbdac3034682a",
+    "outputs\\evidence_improvement\\node_44_smart_persistence.csv": "d44607b8efceefd13ff743438fa04e38c63b2ac6e8a35d126d737c84a3a7cf9c",
+    "outputs\\evidence_improvement\\node_45_fedavg.csv": "de58eeb49c5158028e347b649d01075c1ec86f7c6f07688f84114698470bd4d0",
+    "outputs\\evidence_improvement\\node_45_local_only.csv": "6637146645e9edf72d10196f7ec27430d0e75c31a6d9b5b0acf4ce32464ab0ad",
+    "outputs\\evidence_improvement\\node_45_persistence.csv": "e3a1bf59a3d20914d1fac7924c1c418dc9840c5dfc6a7156d970a045a7f562c6",
+    "outputs\\evidence_improvement\\node_45_reliability_fedavg.csv": "bea87986e3fcedc2b3906c917c29189ddd94ca83f1ee49f4c2300b2882fdb014",
+    "outputs\\evidence_improvement\\node_45_reliability_fedavg_event.csv": "d27bbe5729b41b9fcd6ddf22595c908bccbe8c195e7946add64e3bc5956f81d7",
+    "outputs\\evidence_improvement\\node_45_smart_persistence.csv": "beecd51b1274fa8b32a1aaef6f34b1fb80e0e12c2a7d353b6810fdcee22c5a09",
+    "outputs\\evidence_improvement\\node_46_fedavg.csv": "1f27e8b35a4a5247ae967cd850ad82dd894b249968107548de38ba1733843487",
+    "outputs\\evidence_improvement\\node_46_local_only.csv": "da4fbe11bfe0776f4dd30479e92dd3153ebcbfa7ecdd7e4328665b912fa23b34",
+    "outputs\\evidence_improvement\\node_46_persistence.csv": "3ff6299fd595c252cd522c4f6f57c7191a11a6865060fcb127ab57e4d13f4bae",
+    "outputs\\evidence_improvement\\node_46_reliability_fedavg.csv": "7968d75b1aa05925e7affa1e0af5a6e213f2701f8dff8a234eac629064f7691e",
+    "outputs\\evidence_improvement\\node_46_reliability_fedavg_event.csv": "5c0754ed7259cc61fa08ec2a648357f69f5b2253326f1c4fc493a3736addc356",
+    "outputs\\evidence_improvement\\node_46_smart_persistence.csv": "7ca89699d4d14f92a3e4ef4ac42a51740bc8ccce7b080cf5d798fc14da1a962e",
+    "outputs\\evidence_improvement\\policy_freeze.json": "99d80abf49b9006597ef2614c2a909d302982e806b4f4c68916b705bbd1910cd",
+    "outputs\\evidence_improvement\\reference_verified.csv": "dff2914c9f51f8e8d61deedeed54353b10bac49c152bb5ea0b15afa091263be0",
+    "outputs\\evidence_improvement\\replay_verification.json": "b8055dbd0175b437558b8f94797c9764353cdda3acdf665680cf7833633a9b6a",
+    "outputs\\evidence_improvement\\selected_schedule.csv": "e469c61a627b6a2abc0d9fb45bec9bf525c0bfd77affb35b3803caf4d0172111",
+    "outputs\\evidence_improvement\\sitewise_results.csv": "9bfe76f4877a8efbbd2e598d467704d8d8ada39f7ee78b4d58a4789296764332",
+    "outputs\\evidence_improvement\\test_results.csv": "976e2ee68132d13e9d187c9f487c50e0777889b50b135a9a614cfa97b7d7ccf1",
+    "outputs\\evidence_improvement\\validation_candidates.csv": "661194a35fa091a1d7a566b8da78ec9b49cd99b4ceae2bd5abbeceef9ceab2cc",
+    "outputs\\evidence_improvement\\verification.json": "02923f3f295f895102f041ea5fb87a9a3883194b005e3131d860fb4d48247f03",
+    "outputs\\evidence_improvement\\weather.csv": "055960cbd656390378383e63648990d831dde2314766a491f9885fc133f11393",
+    "outputs\\mentor_validation\\bengaluru_hourly.csv": "055960cbd656390378383e63648990d831dde2314766a491f9885fc133f11393",
+    "outputs\\mentor_validation\\config.yaml": "486770d73f80492a6f0701a9f774173cd9c509de23ac8c0919ad89cc5e37b83f",
+    "outputs\\mentor_validation\\forecasting_metrics.csv": "df7abf816c1f2b32d50a3d1c3e48b863c510012e41c9b77f7226ab963a30e2dd",
+    "outputs\\mentor_validation\\legacy_reserve_reproduction.csv": "2875b19cf4177eadd91aee6fb968de4a828becf2da6265bc53392b2dd2d21cc0",
+    "outputs\\mentor_validation\\legacy_verification.json": "1143cb6867b173e80a35f5cb95f47c75bebbaacac3a427a27d6ff0c9c0145661",
+    "outputs\\mentor_validation\\model_to_operations_comparison.csv": "fa87f91f5a16c274cb100fff7e9fdb768f109ebe5533ba3557f129923b3c4d04",
+    "outputs\\mentor_validation\\optimization_summary.json": "356eaff6dc3e9ea8d45d57b5ac8a29470c2d2ce81abdad35c1deceb67d3bbdcb",
+    "outputs\\mentor_validation\\provenance.json": "7a6ea6d48006828fb7e29e93bbd8f9e164153a18a97008257803a5d1fb52cb71",
+    "outputs\\mentor_validation\\representative_schedule.csv": "a13d6f2f2e1d896af842e9110cdda429790db5155bdb2238b90e4055c58ebc22",
+    "outputs\\mentor_validation\\representative_schedule.png": "da2c94f7a9e11ef8ab37eca7db054a2553bc51d7d2cabc3ccc70221d35e7f744",
+    "outputs\\mentor_validation\\reproducibility_manifest.json": "f801dc244d1ec3a8e96db3fec734e4b5ec7b716c301ce5ee53dea8121c1088e7",
+    "outputs\\mentor_validation\\reserve_schedule_comparison.csv": "f8b3483a46877f908cc3a4eca24b0a47ac5315b67273a1497804507f7892e653",
+    "outputs\\mentor_validation\\robustness_results.csv": "7149e4062e7683be88ef90d42b5ead23df65bc6fd405f1f50e8871077fb7fce7",
+    "outputs\\mentor_validation\\scaling_results.csv": "e9e28902d39d37e21e09e0311a25fad677434a64c08a5387a2fbaa2b18dcaffc",
+    "outputs\\mentor_validation\\schedule_chart.json": "82ae91220a62cf8280abc88f0f3c6859b07db52928dbe53ab1d42ca2eb41ca8b",
+    "outputs\\mentor_validation\\sitewise_metrics.csv": "0883388f228ca9fb1d80575788ef4b5dbe7c26aaa9806af3f87a5c60e187a885",
+    "outputs\\mentor_validation\\summary_metrics.json": "794ea16eb4f9b4b54f3c511125550f033cdaa2515c8ca00eb9f6c7bbab33fd61",
+    "outputs\\mentor_validation\\virtual_site_parameters.csv": "eacabf0faf878f888e848c9009bc6320fc20a291a1f6a2b6af132667a39b7820"
+  },
+  "assumptions": "Engineering stresses, not empirically fitted distributions. Outcomes of interval t observable before t+1; generic backup.",
+  "selection": "Validation only: joint target >=99% in each seed and ENS <= fixed20; lowest backup, else fixed fallback.",
+  "guard": "Experimental joint net-gap error quantile; existing nominal default unchanged."
+}

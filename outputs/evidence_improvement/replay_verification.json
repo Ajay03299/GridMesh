@@ -1,0 +1,6 @@
+{
+  "policy_test_rows_replayed": 70,
+  "validation_rows_replayed": 270,
+  "frozen_selection_matches": true,
+  "test_results_sha256": "976e2ee68132d13e9d187c9f487c50e0777889b50b135a9a614cfa97b7d7ccf1"
+}

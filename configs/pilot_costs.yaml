@@ -1,0 +1,16 @@
+currency: INR
+participation: [50, 100]
+# Historical illustration withdrawn from active pricing. Use affordability_costs.yaml.
+software_hosting_monthly: {value: null, source: 'Unsupported historical 4650 allocation removed; see docs/AFFORDABILITY.md'}
+operator_labour_monthly: {value: null, source: 'TBD: hours and local wage agreement'}
+maintenance_monthly: {value: null, source: 'TBD: operator/asset supplier scope'}
+connectivity_monthly: {value: null, source: 'TBD: measured traffic and tariff'}
+sensors_gateways_monthly: {value: null, source: 'TBD: metering access, installed gateway quote and amortization'}
+backup_energy_monthly_mwh: {value: null, source: 'TBD: pilot duty cycle; do not extrapolate test totals'}
+backup_energy_inr_per_kwh: {value: null, source: 'TBD: asset technology, fuel/tariff, efficiency'}
+existing_asset_access_monthly: {value: null, source: 'TBD: owner access/availability payment'}
+new_asset_capex: {value: null, source: 'TBD: installed supplier quote'}
+new_asset_life_months: {value: null, source: 'TBD: rated duty cycle and replacement life'}
+new_asset_financing_monthly: {value: null, source: 'TBD: financing agreement; separate from straight-line replacement provision'}
+# Explicit, hypothetical driver sensitivities, not price claims.
+monthly_cost_additions: [0, 1000, 5000]

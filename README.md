@@ -2,7 +2,17 @@
 
 Hackathon prototype · Yuva Yodha Energy Tech Hackathon · Grid Reliability & Renewable Intermittency track.
 
-**Current evidence: [`outputs/RESULTS.md`](outputs/RESULTS.md)**. Methodology and limits:
+**Substantive evidence improvements:** [reproduction, weakness checklist and pilot gaps](docs/EVIDENCE_IMPROVEMENTS.md).
+Run `python run_evidence_improvement.py`, then `python report_evidence_improvement.py` for a separate
+chronological Bengaluru baseline/policy experiment. Select **Deterministic advisory demo** in the
+dashboard for an untrained cloud-shock/asset-limit scenario. Pilot economics are editable in
+`configs/affordability_costs.yaml`; see [itemised affordability and historical correction](docs/AFFORDABILITY.md).
+Run `python build_full_service_costs.py` for low/base/high,50/100-home scenarios.
+The unsupported4650 allocation is withdrawn; full costs and willingness to pay remain unresolved.
+Existing research/mentor evidence is unchanged.
+
+**Current chronological extension:** [verified findings](outputs/hackathon_completion/FINDINGS.md).
+**Separate historical reference evidence:** [`outputs/RESULTS.md`](outputs/RESULTS.md). Methodology and limits:
 [`docs/MODEL_RELIABILITY_SCALABILITY.md`](docs/MODEL_RELIABILITY_SCALABILITY.md).
 
 The enhanced branch adds decision trees, local/pooled XGBoost, a 12-method comparison, update
@@ -47,10 +57,10 @@ while its uncertainty and monitoring are causal. A live pilot requires rolling p
 
 ## Problem
 Grid operators must hold reserve for the gap between forecast and actual renewable output.
-Better short-horizon forecasts mean less reserve for the same reliability — but renewable sites
+Better short-horizon forecasts can support better reserve decisions, but do not guarantee the same reliability — renewable sites
 are owned by different operators who do not want to pool raw data, and some sites have bad
 sensors. GridMesh lets sites train a shared forecaster **without routinely pooling raw data**,
-makes aggregation **robust to degraded sensors**, and turns forecast uncertainty into a
+offers **experimental aggregation safeguards for degraded sensors**, and turns forecast uncertainty into a
 **physically constrained backup schedule** at one neighbourhood node.
 
 FL itself is not our novelty. Our contribution is the reliability-aware integration:
@@ -215,6 +225,30 @@ and cost inputs are simulation assumptions.
 
 ## Current findings
 
+### Indian-weather mentor validation (separate protocol)
+
+Run `python run_mentor_validation.py` for 100 heterogeneous virtual rooftop sites,
+five paired seeds and MLP/GRU/LSTM under the same 12-round federated protocol.
+The archived NASA POWER Bengaluru record covers all 8,784 hourly observations of
+2024 UTC. Targets are modeled PV, not measured plant output. The forecast horizon
+is **60 minutes**, not the legacy 30-minute horizon. Hourly irradiation is converted
+to interval-average irradiance without inventing sub-hourly observations.
+
+This experiment fixes grid availability, demand, asset limits and the objective
+coefficients across models. Its LP uses one-hour intervals and a constant
+`1*q + 20*u` assumed-cost objective. `u` is uncovered **planned reserve requirement**,
+not measured outages. Realized unserved energy and operating-cost score are
+evaluated separately using actual modeled solar. Per-day scheduling remains a
+retrospective benchmark, not online grid control.
+
+Evidence is written to `outputs/mentor_validation/`, never mixed with legacy
+results. Run `python verify_legacy_evidence.py` to re-fit the retained slide-7/9
+legacy protocols, and `python -m unittest test_mentor_validation -v` for hourly
+accounting and pairing regression tests. The existing `python audit.py` remains
+the broad regression guard. All client processes are emulated in one Python
+process. Training exchanges parameters/reports, but physical data isolation,
+secure aggregation and measured Indian PV validation remain unimplemented.
+
 Use [`docs/PITCH_NUMBERS.md`](docs/PITCH_NUMBERS.md) for pitch numbers and
 [`outputs/RESULTS.md`](outputs/RESULTS.md) for the complete model, reliability, scale and reserve
 tables. Those reports derive from completed frozen-protocol experiments. Failed targets remain
@@ -236,10 +270,72 @@ Do not mix legacy two-transfer communication values with the new three-transfer 
 
 Run `python audit.py` after every change — it is the regression guard.
 
+## Current operator demo and credible submission extension
+
+From the repository root in PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe build_advisory_demo.py
+.venv\Scripts\python.exe -m streamlit run dashboard.py
+```
+
+Select **Deterministic advisory demo** in the sidebar. It does not require training,
+network access or legacy dashboard replay files. Normal, cloud, insufficient backup,
+stale/missing input and degraded-site scenarios expose forecasts, power/energy,
+uncovered reserve and separate synthetic actual outcomes. Zero-solar fallback is a
+labelled conservative planning bound. Human approval/physical dispatch remain outside
+the application. The unchecked dashboard view is the separate legacy4-site replay.
+
+```powershell
+.venv\Scripts\python.exe -m unittest test_evidence_improvement test_mentor_validation test_operating_improvements -q
+.venv\Scripts\python.exe audit.py
+.venv\Scripts\python.exe check_operator_demo.py
+.venv\Scripts\python.exe check_dashboard.py
+.venv\Scripts\python.exe verify_evidence_improvement.py
+.venv\Scripts\python.exe build_full_service_costs.py
+.venv\Scripts\python.exe build_hackathon_findings.py
+```
+
+`check_dashboard.py` also requires the existing replay files; generate them using
+`build_dashboard.py` if absent. See [implemented findings](outputs/hackathon_completion/FINDINGS.md),
+[proposed pilot/O&M](docs/PILOT_AND_OPERATIONS.md), [claim boundaries](docs/CLAIMS_REGISTER.md)
+and editable [itemised costs](configs/affordability_costs.yaml). Historical known-subtotal
+cost files and old submission packages are superseded by `outputs/affordability_v1`.
+Missing quotes/taxes keep all-in price and break-even TBD. No sourced Bengaluru installed
+price, asset agreement, field reliability or willingness-to-pay is established.
+
+Reproduce new studies into NEW directories, never overwrite completed evidence:
+
+```powershell
+.venv\Scripts\python.exe run_india_failure_checks.py --out outputs/reproduced_faults --seeds 42 43 44
+.venv\Scripts\python.exe run_operating_sensitivity.py --out outputs/reproduced_operating
+```
+
+Completed final sensitivity is `outputs/operating_sensitivity_v3`; v1 incomplete and v2
+superseded after correcting night-only stress-event alignment. Frozen original source
+hashes, preregistration and validation policy freeze are included. New guard is experimental;
+default nominal planner unchanged. No consistent current-India weighting accuracy benefit.
+
+## Latest submission artifacts
+
+- [Final 12-slide PowerPoint](docs/submission/GridMesh_Final_Submission.pptx)
+- [Submission PDF](docs/submission/GridMesh_Final_Submission.pdf)
+- [Actual dashboard screenshots](docs/submission/GridMesh_UI_Screenshots.zip)
+
+The latest deck includes the implemented advisory UI, simulation evidence, a
+prototype-build roadmap, and the itemised approximately INR15,268/month covered
+service estimate. The funding example is conditional, not an approved subsidy.
+All-in costs, willingness to pay and field reliability remain unvalidated.
+Older submission files are retained as historical artifacts, not the current deck.
+
 ## Limitations / honesty notes
 - Raw training data stays local; model parameters and a few summary numbers are exchanged.
   **No secure aggregation or differential privacy** is implemented — no privacy guarantee is claimed.
 - One weather record shared by all simulated sites (co-located sites at one node); real fleets
   have weather diversity.
 - PV power is modeled, not measured; demand is synthetic; costs are assumptions.
-- Event-aware participation trades a little accuracy (≈ 1% RMSE) for half the communication.
+- Chronological selective participation trades +2.72% relative mean RMSE for 45.55% fewer
+  modeled protocol bytes. Older approximately 1%/half-communication values belong to
+  separate reference protocols; none is measured physical network traffic.

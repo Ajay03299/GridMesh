@@ -57,9 +57,11 @@ plus transparent community reserve evidence. Public pages cannot establish Schne
 algorithms. Integration is a future possibility, without an existing partnership claim.
 
 **Who operates and pays?** A community operator/ESCO could own support and escalate to approved
-asset operators and the DISCOM. An illustrative INR4,650 monthly software budget is INR46.50 for
-100 households or INR93 for 50. Hardware, gateways, energy, tax and financing are excluded. Quotes,
-willingness to pay and avoided-cost evidence are required before affordability is established.
+asset operators and the DISCOM. The unsupported INR4,650 allocation is withdrawn.
+The itemised existing-assets model estimates covered service at INR15,268/month base,
+about INR153/home at100 payers or INR305 at50. This combines published infrastructure
+rates with explicit paid-task assumptions; unquoted retrofit/access and energy changes
+remain excluded. See docs/AFFORDABILITY.md. Total economics and WTP are unresolved.
 
 **Why are simulated capacities 5–20 MW?** Defaults represent plant portfolios. They are independent
 of the 100-household service-cost example. A neighbourhood pilot must supply measured kW-scale

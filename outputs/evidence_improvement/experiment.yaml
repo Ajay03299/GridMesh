@@ -1,0 +1,53 @@
+source: data/raw/nasa_power_bengaluru_2024.json
+seeds:
+- 42
+- 43
+- 44
+- 45
+- 46
+clients: 100
+rounds: 12
+local_epochs: 12
+methods:
+- persistence
+- smart_persistence
+- local_only
+- fedavg
+- reliability_fedavg
+- reliability_fedavg_event
+policies:
+- name: fixed_20pct
+  family: fixed
+  fraction: 0.2
+- name: fixed_10pct
+  family: fixed
+  fraction: 0.1
+- name: fixed_15pct
+  family: fixed
+  fraction: 0.15
+- name: nominal_05
+  family: nsigma
+  delta: 0.05
+  window: 6
+- name: nominal_01
+  family: nsigma
+  delta: 0.01
+  window: 12
+- name: empirical_05
+  family: empirical
+  delta: 0.05
+  window: 12
+- name: empirical_01
+  family: empirical
+  delta: 0.01
+  window: 36
+- name: nominal_floor10
+  family: nsigma
+  delta: 0.05
+  window: 12
+  floor: 0.1
+- name: empirical_floor10
+  family: empirical
+  delta: 0.01
+  window: 36
+  floor: 0.1

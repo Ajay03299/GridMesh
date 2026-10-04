@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "currency": "INR",
+  "location": "Bengaluru, India",
+  "review_date": "2026-10-04",
+  "community_homes": 100,
+  "participation": [
+    50,
+    100
+  ],
+  "usd_to_inr": {
+    "low": 90,
+    "base": 95,
+    "high": 100
+  },
+  "contingency_fraction": {
+    "low": 0.1,
+    "base": 0.15,
+    "high": 0.2
+  },
+  "setup_recovery_months": 36,
+  "capital_recovery": "replacement",
+  "backup_life_months": 60,
+  "commercial_margin_fraction": 0,
+  "operating_change_monthly_inr": null,
+  "sources": {
+    "aws": {
+      "url": "https://aws.amazon.com/lightsail/pricing/",
+      "checked": "2026-10-04",
+      "location": "Asia Pacific Mumbai",
+      "units": "USD/month",
+      "evidence": "Public IPv4 Linux 4GB $24; 8GB $44. Object storage 5/100/250GB $1/$3/$5. Regular on-demand rates, no free trial credited.",
+      "eligibility": "Account and chosen region required. Mumbai transfer quota is half published headline allowance. No load/traffic benchmark on these SKUs. Local training compute must exist or be separately costed."
+    },
+    "aws_tax": {
+      "url": "https://aws.amazon.com/tax-help/apac-vat-rates/",
+      "checked": "2026-10-04",
+      "location": "India billing address",
+      "units": "fraction of invoice",
+      "evidence": "India GST listed at 18%. No input-tax credit assumed.",
+      "eligibility": "Check entity / invoice at purchase. This is not a tax opinion for household contributions."
+    },
+    "airtel": {
+      "url": "https://www.airtel.in/plans/broadband/bangalore/",
+      "checked": "2026-10-04",
+      "location": "Bangalore",
+      "units": "INR/month before GST",
+      "evidence": "Regular 499 plan, up to 40 Mbps; no promotion or OTT plan counted.",
+      "eligibility": "Address feasibility and permitted community use not confirmed. One community connection, NOT connectivity to 100 separate sites. No free installation credited."
+    },
+    "telecom_tax": {
+      "url": "https://cbic-gst.gov.in/pdf/press-release/GST-telecom-services.pdf",
+      "checked": "2026-10-04",
+      "location": "India",
+      "units": "fraction of invoice",
+      "evidence": "18% telecom GST; supplier also states GST additional.",
+      "eligibility": "Tax-inclusive cash cost. No input-tax credit assumed."
+    },
+    "task_estimate": {
+      "url": null,
+      "checked": "2026-10-04",
+      "location": "Proposed Bengaluru pilot",
+      "units": "hours x INR/hour",
+      "evidence": "Explicit engineering task estimates, not observed times, wage surveys, legal minimum wages or supplier quotes.",
+      "eligibility": "Negotiate paid incremental hours; do not assume existing staff work for free. Contractor 18% tax is a planning allowance, not established tax applicability."
+    },
+    "quote_needed": {
+      "url": null,
+      "checked": "2026-10-04",
+      "location": "Pilot address / asset owner TBD",
+      "units": "item specific",
+      "evidence": "No installed quote, agreement, meter inventory or measured dispatch available.",
+      "eligibility": "Required to close total economics; null does not mean zero."
+    }
+  },
+  "items": [
+    {
+      "name": "cloud_compute",
+      "scope": "incremental",
+      "period": "monthly",
+      "quantity": {
+        "low": 1,
+        "base": 1,
+        "high": 1
+      },
+      "rate": {
+        "low": 24,
+        "base": 24,
+        "high": 44
+      },
+      "currency": "USD",
+      "tax": 0.18,
+      "source": "aws",
+      "payer": "association via household contributions",
+      "explanation": "4GB low/base; 8GB high. Hosting / aggregation allowance, not proven 100-client distributed compute."
+    },
+    {
+      "name": "offsite_storage",
+      "scope": "incremental",
+      "period": "monthly",
+      "quantity": {
+        "low": 1,
+        "base": 1,
+        "high": 1
+      },
+      "rate": {
+        "low": 1,
+        "base": 3,
+        "high": 5
+      },
+      "currency": "USD",
+      "tax": 0.18,
+      "source": "aws",
+      "payer": "association via household contributions",
+      "explanation": "Separate archive/export allowance; no egress overage included within assumed quota."
+    },
+    {
+      "name": "community_connectivity",
+      "scope": "incremental",
+      "period": "monthly",
+      "quantity": 1,
+      "rate": 499,
+      "currency": "INR",
+      "tax": 0.18,
+      "source": "airtel",
+      "payer": "association via household contributions",
+      "explanation": "Charge full added line, rather than silently assume an existing line is free."
+    },
+    {
+      "name": "operator_review",
+      "scope": "incremental",
+      "period": "monthly",
+      "quantity": {
+        "low": 7.5,
+        "base": 15,
+        "high": 30
+      },
+      "rate": {
+        "low": 150,
+        "base": 250,
+        "high": 400
+      },
+      "currency": "INR",
+      "tax": 0,
+      "source": "task_estimate",
+      "payer": "association via household contributions",
+      "explanation": "15/30/60 min each day x 30 days. Direct paid operator allowance; rate includes employment overhead by assumption. No round-the-clock SLA."
+    },
+    {
+      "name": "software_support",
+      "scope": "incremental",
+      "period": "monthly",
+      "quantity": {
+        "low": 2,
+        "base": 4,
+        "high": 8
+      },
+      "rate": {
+        "low": 500,
+        "base": 750,
+        "high": 1000
+      },
+      "currency": "INR",
+      "tax": 0.18,
+      "source": "task_estimate",
+      "payer": "association via household contributions",
+      "explanation": "Patch, backup check and model/application issue review. Paid contractor allowance, no development profit or 24h support."
+    },
+    {
+      "name": "data_health_maintenance",
+      "scope": "incremental",
+      "period": "monthly",
+      "quantity": {
+        "low": 1,
+        "base": 2,
+        "high": 4
+      },
+      "rate": {
+        "low": 500,
+        "base": 750,
+        "high": 1000
+      },
+      "currency": "INR",
+      "tax": 0.18,
+      "source": "task_estimate",
+      "payer": "association via household contributions",
+      "explanation": "Readout, timestamp and mapping checks only. Different tasks from software support. Physical asset maintenance remains separate."
+    },
+    {
+      "name": "onboarding_integration",
+      "scope": "incremental",
+      "period": "upfront",
+      "quantity": {
+        "low": 10,
+        "base": 20,
+        "high": 40
+      },
+      "rate": {
+        "low": 500,
+        "base": 750,
+        "high": 1000
+      },
+      "currency": "INR",
+      "tax": 0.18,
+      "source": "task_estimate",
+      "payer": "association, recovered over 36 months",
+      "explanation": "Existing data export mapping, configuration and acceptance checks; not new electrical installation or 100 edge computers."
+    },
+    {
+      "name": "operator_training",
+      "scope": "incremental",
+      "period": "upfront",
+      "quantity": {
+        "low": 2,
+        "base": 4,
+        "high": 8
+      },
+      "rate": {
+        "low": 150,
+        "base": 250,
+        "high": 400
+      },
+      "currency": "INR",
+      "tax": 0,
+      "source": "task_estimate",
+      "payer": "association, recovered over 36 months",
+      "explanation": "Paid operator training hours. Technical trainer time is included in onboarding, not charged again."
+    },
+    {
+      "name": "connectivity_commissioning_allowance",
+      "scope": "incremental",
+      "period": "upfront",
+      "quantity": 1,
+      "rate": {
+        "low": 1500,
+        "base": 2500,
+        "high": 4000
+      },
+      "currency": "INR",
+      "tax": 0.18,
+      "source": "task_estimate",
+      "payer": "association, recovered over 36 months",
+      "explanation": "Budget allowance for site visit/connection commissioning, not provider quote. No promotional installation waiver counted."
+    },
+    {
+      "name": "incremental_meter_gateway_retrofit",
+      "scope": "incremental",
+      "period": "upfront",
+      "quantity": 1,
+      "rate": null,
+      "currency": "INR",
+      "tax": null,
+      "source": "quote_needed",
+      "payer": "association",
+      "explanation": "Meter/gateway inventory, local compute, safety installation and API access unknown. Add installed quote or explicitly confirm reusable capability; no default zero."
+    },
+    {
+      "name": "incremental_asset_access",
+      "scope": "incremental",
+      "period": "monthly",
+      "quantity": 1,
+      "rate": null,
+      "currency": "INR",
+      "tax": null,
+      "source": "quote_needed",
+      "payer": "association under asset-owner contract",
+      "explanation": "Additional reserve availability/access charge, above already-paid existing owner contract. Unknown, not free."
+    },
+    {
+      "name": "existing_asset_maintenance",
+      "scope": "baseline_operating",
+      "period": "monthly",
+      "quantity": 1,
+      "rate": null,
+      "currency": "INR",
+      "tax": null,
+      "source": "quote_needed",
+      "payer": "existing asset owner, existing funding unchanged unless agreement varies",
+      "explanation": "Do not charge original equipment capex again. Existing O&M still belongs in total operating cost."
+    },
+    {
+      "name": "existing_asset_access",
+      "scope": "baseline_operating",
+      "period": "monthly",
+      "quantity": 1,
+      "rate": null,
+      "currency": "INR",
+      "tax": null,
+      "source": "quote_needed",
+      "payer": "association under existing asset-owner contract",
+      "explanation": "Current asset availability fee. Separate from incremental_asset_access, no duplicate base fee."
+    },
+    {
+      "name": "consumed_backup_energy",
+      "scope": "baseline_operating",
+      "period": "usage",
+      "quantity": null,
+      "rate": null,
+      "quantity_unit": "MWh/month",
+      "rate_unit": "INR/kWh delivered",
+      "unit_conversion": 1000,
+      "currency": "INR",
+      "tax": null,
+      "source": "quote_needed",
+      "payer": "existing energy buyer / association",
+      "explanation": "Actual consumed backup x delivered-energy unit cost. Quantity after GridMesh may change, but scheduled backup is NOT consumption. GridMesh-induced consumption change remains unknown."
+    },
+    {
+      "name": "new_backup_equipment",
+      "scope": "new_asset",
+      "period": "upfront",
+      "quantity": 1,
+      "rate": null,
+      "currency": "INR",
+      "tax": null,
+      "source": "quote_needed",
+      "payer": "association or asset financier, unconfirmed",
+      "explanation": "Installed backup equipment quote with life and residual value. No replacement of existing owner equipment in existing-assets scenario."
+    },
+    {
+      "name": "new_backup_financing",
+      "scope": "new_asset",
+      "period": "monthly",
+      "recovery": "financing",
+      "quantity": 1,
+      "rate": null,
+      "currency": "INR",
+      "tax": null,
+      "source": "quote_needed",
+      "payer": "association",
+      "explanation": "Quoted repayment including principal/interest. Alternative to equipment straight-line recovery; never automatically add both."
+    }
+  ],
+  "funding": {
+    "sponsor_monthly_inr": 0,
+    "sponsor_confirmed": false,
+    "sponsor_name": null,
+    "proposed_household_payment_inr": null,
+    "explanation": "No sponsor, subsidy, DISCOM payment or free labour assumed. Conditional funding requires an explicitly named payer."
+  }
+}

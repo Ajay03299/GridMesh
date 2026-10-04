@@ -1,0 +1,18 @@
+currency: INR
+location: Bengaluru, India
+review_date: '2026-10-04'
+capital_recovery: replacement # alternative financing; never automatically add both
+participation: [50, 100]
+monthly_driver_additions_inr: [0, 1000, 5000] # hypotheses, NOT quotations
+items:
+  - {name: software_and_hosting, period: monthly, inr: null, tax_fraction: null, payer: participating households, applies_to: [existing_assets, new_equipment], source: 'Superseded: use affordability_costs.yaml itemised planning model. Historical 4650 had no verified breakdown.'}
+  - {name: connectivity, period: monthly, inr: null, tax_fraction: null, payer: community operator, applies_to: [existing_assets, new_equipment], source: 'TBD: installed-location tariff, traffic, taxes and reliability'}
+  - {name: operator_labour, period: monthly, inr: null, tax_fraction: null, payer: association or ESCO, applies_to: [existing_assets, new_equipment], source: 'TBD: agreed hours, wage and tax applicability'}
+  - {name: maintenance, period: monthly, inr: null, tax_fraction: null, payer: asset owner, applies_to: [existing_assets, new_equipment], source: 'TBD: qualified technician contract'}
+  - {name: sensors_and_gateway, period: upfront, inr: null, tax_fraction: null, payer: pilot sponsor, applies_to: [existing_assets, new_equipment], source: 'TBD: installed metering/gateway quote; existing meter access not established'}
+  - {name: installation_and_commissioning, period: upfront, inr: null, tax_fraction: null, payer: pilot sponsor, applies_to: [existing_assets, new_equipment], source: 'TBD: wiring, commissioning and safety inspection'}
+  - {name: backup_energy, period: monthly, inr: null, tax_fraction: null, payer: participating households, applies_to: [existing_assets, new_equipment], source: 'TBD: dispatch duty cycle, technology, fuel/tariff and conversion efficiency'}
+  - {name: asset_access, period: monthly, inr: null, tax_fraction: null, payer: association or ESCO, applies_to: [existing_assets], source: 'TBD: owner availability/access agreement'}
+  - {name: backup_equipment, period: upfront, inr: null, tax_fraction: null, payer: pilot sponsor, applies_to: [new_equipment], source: 'TBD: technology-specific capacity and installed supplier quote'}
+  - {name: replacement_provision, period: monthly, inr: null, tax_fraction: null, payer: association or ESCO, applies_to: [new_equipment], recovery: replacement, source: 'TBD: equipment value / useful life and residual value; alternative to financing'}
+  - {name: financing_payment, period: monthly, inr: null, tax_fraction: null, payer: association or ESCO, applies_to: [new_equipment], recovery: financing, source: 'TBD: financing repayment schedule; alternative to replacement recovery'}

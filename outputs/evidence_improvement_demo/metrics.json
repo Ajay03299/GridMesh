@@ -1,0 +1,8 @@
+{
+  "intervals": 7,
+  "availability_pct": 28.57142857142857,
+  "ens_mwh": 0.48,
+  "backup_mwh": 0.20000000000000004,
+  "planned_uncovered_mwh": 0.4700000000000001,
+  "cost_score": 9.799999999999999
+}

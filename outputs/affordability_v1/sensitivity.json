@@ -1,0 +1,26 @@
+[
+  {
+    "change": "Base",
+    "monthly_inr": 15268.445222222223,
+    "homes100": 152.68445222222223,
+    "homes50": 305.36890444444447
+  },
+  {
+    "change": "Operator review +15 paid hours/month",
+    "monthly_inr": 19580.945222222224,
+    "homes100": 195.80945222222223,
+    "homes50": 391.61890444444447
+  },
+  {
+    "change": "Software support +4 paid hours/month",
+    "monthly_inr": 19339.445222222224,
+    "homes100": 193.39445222222224,
+    "homes50": 386.7889044444445
+  },
+  {
+    "change": "Known setup recovered over 12 months instead of 36",
+    "monthly_inr": 16651.639666666666,
+    "homes100": 166.51639666666665,
+    "homes50": 333.0327933333333
+  }
+]

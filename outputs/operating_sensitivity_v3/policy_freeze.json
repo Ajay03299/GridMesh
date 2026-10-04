@@ -1,0 +1,37 @@
+{
+  "selected": {
+    "normal": {
+      "guard": "joint_0.9",
+      "simple": "fixed_10pct"
+    },
+    "demand_error": {
+      "guard": "fixed_20pct",
+      "simple": "fixed_10pct"
+    },
+    "grid_uncertainty": {
+      "guard": "fixed_20pct",
+      "simple": "fixed_10pct"
+    },
+    "backup_derated": {
+      "guard": "joint_0.9",
+      "simple": "fixed_10pct"
+    },
+    "backup_unavailable": {
+      "guard": "fixed_20pct",
+      "simple": "fixed_10pct"
+    },
+    "half_daily_energy": {
+      "guard": "fixed_20pct",
+      "simple": "fixed_10pct"
+    },
+    "stale_forecast": {
+      "guard": "joint_0.9",
+      "simple": "fixed_10pct"
+    },
+    "cloud_burst": {
+      "guard": "fixed_20pct",
+      "simple": "fixed_10pct"
+    }
+  },
+  "test_used_for_selection": false
+}

@@ -1,0 +1,17 @@
+{
+  "policy_freeze_hash_verified": true,
+  "frozen_reference_unchanged": true,
+  "environment_versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.1",
+    "torch": "2.14.1",
+    "PyYAML": "6.0.3"
+  },
+  "current_code_sha256": {
+    "run_evidence_improvement.py": "a1e4f6b467fdb28ecb28731aa5571fe55e22265b1af273b951e02664d98e2bfb",
+    "src\\reserve\\online.py": "3ea8e5903ddf0226a1ba4054b75a0c3807609ab8b861ac772aec55e5a118dff2",
+    "configs\\evidence_improvement.yaml": "a593892b9195beeb86bf98f75e60ffcfff566c528eda3020ce66b173331b88b8"
+  }
+}

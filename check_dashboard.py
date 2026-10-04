@@ -20,6 +20,19 @@ def main():
                 assert metrics == snapshots[scenario], "Theme changed simulation metrics"
             print(f"PASS dashboard replay: {scenario}, {'dark' if dark else 'light'}")
 
+    app.sidebar.checkbox[0].set_value(True).run()
+    assert not app.exception, [e.message for e in app.exception]
+    assert any(m.label == 'Planned uncovered reserve' for m in app.metric)
+    app.selectbox[0].set_value('stale_missing').run()
+    app.slider[0].set_value(2).run()
+    assert not app.exception
+    assert len(app.warning) >= 1, 'Stale-input warning missing'
+    app.selectbox[0].set_value('insufficient').run()
+    app.slider[0].set_value(4).run()
+    assert not app.exception
+    assert any(m.label == 'Scheduled backup advice' and m.value == '0 kW' for m in app.metric)
+    print('PASS deterministic advisory: constrained, stale and exhausted-energy intervals')
+
 
 if __name__ == "__main__":
     main()
