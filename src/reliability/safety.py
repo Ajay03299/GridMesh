@@ -88,6 +88,8 @@ def safe_forecast(current, last_trusted, local, persistence, *, age_minutes=0,
     The caller supplies checkpoint/local forecasts available at that site.
     """
     base = np.asarray(persistence, dtype=float)
+    if not np.isfinite([age_minutes, max_age_minutes]).all() or min(age_minutes, max_age_minutes) < 0:
+        raise ValueError('Forecast age and maximum age must be finite and nonnegative')
     if not np.isfinite(base).all():
         raise ValueError("No valid persistence fallback is available")
     reason = "stale_inputs" if stale_inputs else "forecast_expired" if age_minutes > max_age_minutes \

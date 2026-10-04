@@ -1,0 +1,29 @@
+{
+  "provider": "NASA POWER",
+  "latitude": 12.9716,
+  "longitude": 77.5946,
+  "year_utc": 2024,
+  "rows": 8784,
+  "step_hours": 1,
+  "sha256": "c6c267e012d9da7c00801437e78c9e07e551137bfbb51f326a81c314a756d07c",
+  "source_header": {
+    "title": "NASA/POWER Source Native Resolution Hourly Data",
+    "api": {
+      "version": "v2.10.2",
+      "name": "POWER Hourly API"
+    },
+    "sources": [
+      "SYN1DEG",
+      "MERRA2"
+    ],
+    "fill_value": -999.0,
+    "time_standard": "UTC",
+    "start": "20240101",
+    "end": "20241231"
+  },
+  "pv_status": "modeled from gridded GHI and temperature, not measured generation",
+  "clear_sky_status": "derived Haurwitz + approximate solar geometry",
+  "ghi_conversion": "hourly Wh/m2 divided by one hour to obtain average W/m2",
+  "weather_diversity": "one co-located weather record; sites are simulated",
+  "source_url": "https://power.larc.nasa.gov/api/temporal/hourly/point?parameters=ALLSKY_SFC_SW_DWN,T2M&community=RE&longitude=77.5946&latitude=12.9716&start=20240101&end=20241231&format=JSON&time-standard=UTC"
+}

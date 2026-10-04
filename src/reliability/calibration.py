@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def monitor_margin(node, margin, delta, window, min_periods, horizon,
-                   fallback, tolerance=0.03):
+                   fallback, tolerance=0.03, step_minutes=10):
     """Use only residuals observable at issue time to monitor previously issued margins.
 
     Insufficient/stale calibration or poor coverage uses max(proposed, fixed margin).
@@ -35,7 +35,7 @@ def monitor_margin(node, margin, delta, window, min_periods, horizon,
             if history:
                 coverage[idx] = 1 - np.mean([x[1] for x in history])
                 age[idx] = max(0.0, float((times[idx] - history[-1][0]) /
-                                         np.timedelta64(1, "m")) - 10 * horizon)
+                                         np.timedelta64(1, "m")) - step_minutes * horizon)
             if not daytime[idx]:
                 used[idx] = 0
                 continue

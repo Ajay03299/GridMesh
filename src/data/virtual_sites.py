@@ -50,7 +50,7 @@ def sample_site_params(k, vs_cfg, seed):
     rng = np.random.default_rng([seed, k])
     return SiteParams(
         site_id=k, name=site_name(k),
-        capacity_mw=round(_u(rng, vs_cfg["capacity_mw"]), 2),
+        capacity_mw=round(_u(rng, vs_cfg["capacity_mw"]), vs_cfg.get("capacity_decimals", 2)),
         derate=_u(rng, vs_cfg["derate"]),
         temp_coeff=_u(rng, vs_cfg["temp_coeff"]),
         sensor_noise_std=_u(rng, vs_cfg["sensor_noise_std"]),
@@ -78,20 +78,24 @@ def build_site_frame(base_df, p: SiteParams, cfg, seed):
     df["pv"] = np.clip(pv + meter_noise, 0, cfg["pv_model"]["inverter_clip"])
 
     # 2) The site's weather SENSORS are imperfect.
-    for c in IRRADIANCE_COLS:
+    irradiance_cols = [c for c in IRRADIANCE_COLS if c in df.columns]
+    other_cols = [c for c in OTHER_SENSOR_COLS if c in df.columns]
+    for c in irradiance_cols:
         noisy = df[c] * (1 + p.sensor_bias) * (1 + rng.normal(0, p.sensor_noise_std, n))
         df[c] = np.clip(noisy, 0, None)
-    for c in OTHER_SENSOR_COLS:
+    for c in other_cols:
         df[c] = df[c] + rng.normal(0, p.sensor_noise_std, n) * base_df[c].std()
 
     # 3) Random sensor dropouts -> NaN, then forward-fill (what a real SCADA pipeline does).
-    sensor_cols = IRRADIANCE_COLS + OTHER_SENSOR_COLS
+    sensor_cols = irradiance_cols + other_cols
     mask = rng.random((n, len(sensor_cols))) < p.missing_rate
     vals = df[sensor_cols].to_numpy(dtype=float)
     vals[mask] = np.nan
     df[sensor_cols] = vals
     df.attrs["missing_frac"] = float(mask.mean())
-    df[sensor_cols] = df[sensor_cols].ffill().bfill()
+    # Do not fill leading missing values from future observations. Unknown initial
+    # readings use a documented zero sentinel; training windows discard warm-up rows.
+    df[sensor_cols] = df[sensor_cols].ffill().fillna(0.0)
     return df
 
 
@@ -120,14 +124,14 @@ def apply_fault(site_df, fault_type, fault_cfg, seed, site_id, severity=1.0):
     n, c, s = len(df), fault_cfg[fault_type], severity
     if fault_type == "feature_corruption":
         scale = max(0.0, 1 - (1 - c["irradiance_scale"]) * s)
-        for col in IRRADIANCE_COLS:
+        for col in [c for c in IRRADIANCE_COLS if c in df.columns]:
             df[col] = np.clip(df[col] * scale * (1 + rng.normal(0, c["noise_std"] * s, n)), 0, None)
     elif fault_type == "target_noise":
         df["pv"] = np.clip(df["pv"] + rng.normal(0, c["std"] * s, n) * (df["pv"] > 0), 0, 1)
     elif fault_type == "stale":
         hold = max(1, int(round(c["hold_steps"] * s)))
         idx = (np.arange(n) // hold) * hold
-        cols = IRRADIANCE_COLS + OTHER_SENSOR_COLS + ["pv"]
+        cols = [c for c in IRRADIANCE_COLS + OTHER_SENSOR_COLS + ["pv"] if c in df.columns]
         df[cols] = df[cols].to_numpy()[idx]
     elif fault_type == "bias":
         df["pv"] = np.clip(df["pv"] * (1 + (c["scale"] - 1) * s), 0, 1)

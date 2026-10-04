@@ -77,13 +77,31 @@ def _asset_limits(node, rcfg):
 
 
 def schedule_backup(node, uncertainty_margin_mw, rcfg):
-    """Return an auditable, capacity-constrained day-ahead backup schedule."""
+    """Return an auditable, capacity-constrained retrospective per-day schedule.
+
+    This benchmark sees the day's sequence of forecasts/margins. It is not an
+    operational day-ahead planner or a closed-loop controller.
+    """
     d = node.copy()
-    margin = np.maximum(np.asarray(uncertainty_margin_mw, float), 0.0)
+    margin = np.asarray(uncertainty_margin_mw, float)
+    step_hours = float(rcfg.get("step_hours", STEP_HOURS))
+    if margin.shape != (len(d),) or not np.isfinite(margin).all():
+        raise ValueError("Uncertainty margin must be a finite vector matching the node rows")
+    if not np.isfinite(step_hours) or step_hours <= 0:
+        raise ValueError("step_hours must be finite and positive")
+    if (margin < 0).any():
+        raise ValueError("Uncertainty margins cannot be negative")
     grid_limit, power_limit, energy_limit = _asset_limits(d, rcfg)
     d["uncertainty_margin_mw"] = margin
-    d["grid_import_mw"] = np.minimum(
-        grid_limit, np.maximum(d["demand_mw"] - d["forecast_mw"], 0.0))
+    grid_mode = rcfg.get("grid_dispatch_mode", "forecast_balanced")
+    if grid_mode == "fixed_availability":
+        # Fair model-to-operations protocol: every model sees the identical G_t.
+        d["grid_import_mw"] = np.minimum(grid_limit, d["demand_mw"])
+    elif grid_mode == "forecast_balanced":
+        d["grid_import_mw"] = np.minimum(
+            grid_limit, np.maximum(d["demand_mw"] - d["forecast_mw"], 0.0))
+    else:
+        raise ValueError(f"Unknown grid_dispatch_mode: {grid_mode}")
     d["expected_gap_mw"] = np.maximum(
         d["demand_mw"] - d["grid_import_mw"] - d["forecast_mw"], 0.0)
     d["required_backup_mw"] = d["expected_gap_mw"] + margin
@@ -96,6 +114,8 @@ def schedule_backup(node, uncertainty_margin_mw, rcfg):
     c_backup = float(rcfg["cost_reserve_per_mwh"])
     c_gap = float(rcfg["cost_shortfall_per_mwh"])
     peak_weight = float(rcfg.get("peak_priority_weight", 0.0))
+    if not np.isfinite([c_backup, c_gap, peak_weight]).all() or min(c_backup, c_gap, peak_weight) < 0:
+        raise ValueError("Cost coefficients and peak priority must be finite and nonnegative")
     dates = pd.to_datetime(d["time"]).dt.date
     for _, idx in d.groupby(dates).groups.items():
         idx = list(idx)
@@ -107,11 +127,11 @@ def schedule_backup(node, uncertainty_margin_mw, rcfg):
         # backup first to high-requirement intervals while keeping the problem linear and auditable.
         req_scale = req / max(req.max(), 1e-9)
         gap_value = c_gap * (1.0 + peak_weight * req_scale)
-        objective = np.r_[np.full(n, c_backup * STEP_HOURS), gap_value * STEP_HOURS]
+        objective = np.r_[np.full(n, c_backup * step_hours), gap_value * step_hours]
         A = np.zeros((n + 1, 2 * n))
         A[:n, :n] = -np.eye(n)
         A[:n, n:] = -np.eye(n)
-        A[n, :n] = STEP_HOURS
+        A[n, :n] = step_hours
         b = np.r_[-req, energy_limit]
         bounds = [(0.0, power_limit)] * n + [(0.0, None)] * n
         result = linprog(objective, A_ub=A, b_ub=b, bounds=bounds, method="highs")
@@ -123,6 +143,10 @@ def schedule_backup(node, uncertainty_margin_mw, rcfg):
     d["grid_import_limit_mw"] = grid_limit
     d["backup_power_limit_mw"] = power_limit
     d["backup_energy_limit_mwh"] = energy_limit
+    d["step_hours"] = step_hours
+    d["planning_unserved_cost_per_mwh"] = c_gap * (
+        1.0 + peak_weight * d["required_backup_mw"] /
+        d.groupby(dates)["required_backup_mw"].transform("max").clip(lower=1e-9))
     return d
 
 
@@ -136,9 +160,10 @@ def simulate(node, reserve_mw, rcfg, policy_name, delta=None):
     d["used_mw"] = np.minimum(d["scheduled_backup_mw"], d["deficit_mw"])
     d["shortfall_mw"] = d["deficit_mw"] - d["used_mw"]
     ev = d[(d["split"] == "test") & d["daytime"]]
+    step_hours = float(rcfg.get("step_hours", STEP_HOURS))
 
-    reserve_mwh = ev["scheduled_backup_mw"].sum() * STEP_HOURS
-    ens_mwh = ev["shortfall_mw"].sum() * STEP_HOURS
+    reserve_mwh = ev["scheduled_backup_mw"].sum() * step_hours
+    ens_mwh = ev["shortfall_mw"].sum() * step_hours
     cost_res = rcfg["cost_reserve_per_mwh"] * reserve_mwh
     cost_ens = rcfg["cost_shortfall_per_mwh"] * ens_mwh
     summary = {
@@ -146,15 +171,15 @@ def simulate(node, reserve_mw, rcfg, policy_name, delta=None):
         "delta": delta,
         "intervals": int(len(ev)),
         "reserve_energy_mwh": reserve_mwh,
-        "reserve_used_mwh": ev["used_mw"].sum() * STEP_HOURS,
+        "reserve_used_mwh": ev["used_mw"].sum() * step_hours,
         "shortfall_energy_mwh": ens_mwh,
-        "ens_pct_of_demand": 100 * ens_mwh / (ev["demand_mw"].sum() * STEP_HOURS),
+        "ens_pct_of_demand": 100 * ens_mwh / (ev["demand_mw"].sum() * step_hours),
         "mean_reserve_mw": ev["scheduled_backup_mw"].mean(),
         "reserve_pct_of_forecast": 100 * ev["scheduled_backup_mw"].sum() / max(ev["forecast_mw"].sum(), 1e-9),
-        "expected_gap_energy_mwh": ev["expected_gap_mw"].sum() * STEP_HOURS,
-        "uncertainty_margin_energy_mwh": ev["uncertainty_margin_mw"].sum() * STEP_HOURS,
-        "planned_capacity_gap_mwh": ev["planned_gap_mw"].sum() * STEP_HOURS,
-        "grid_import_energy_mwh": ev["grid_import_mw"].sum() * STEP_HOURS,
+        "expected_gap_energy_mwh": ev["expected_gap_mw"].sum() * step_hours,
+        "uncertainty_margin_energy_mwh": ev["uncertainty_margin_mw"].sum() * step_hours,
+        "planned_capacity_gap_mwh": ev["planned_gap_mw"].sum() * step_hours,
+        "grid_import_energy_mwh": ev["grid_import_mw"].sum() * step_hours,
         "backup_power_limit_mw": float(ev["backup_power_limit_mw"].iloc[0]),
         "backup_energy_limit_mwh_per_day": float(ev["backup_energy_limit_mwh"].iloc[0]),
         "availability_pct": 100 * (ev["shortfall_mw"] <= 1e-9).mean(),
@@ -162,6 +187,8 @@ def simulate(node, reserve_mw, rcfg, policy_name, delta=None):
         "cost_reserve": cost_res,
         "cost_shortfall": cost_ens,
         "total_cost": cost_res + cost_ens,
+        "planning_objective_score": float((rcfg["cost_reserve_per_mwh"] * ev.scheduled_backup_mw +
+            ev.planning_unserved_cost_per_mwh * ev.planned_gap_mw).sum() * step_hours),
     }
     return d, summary
 
@@ -184,7 +211,8 @@ def run_policies(node, cfg, seed):
         d["mu_e"], d["sigma_e"] = mu, sd
         health = monitor_margin(node, r, dlt, cfg.get("safety", {}).get("calibration_window", 72),
                                 rcfg["min_periods"], h, fallback,
-                                cfg.get("safety", {}).get("calibration_tolerance", 0.03))
+                                cfg.get("safety", {}).get("calibration_tolerance", 0.03),
+                                step_minutes=60 * rcfg.get("step_hours", STEP_HOURS))
         for col in ("rolling_coverage", "calibration_samples", "calibration_age_minutes",
                     "calibration_warning"):
             d[col] = health[col]

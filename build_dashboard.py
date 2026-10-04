@@ -86,6 +86,9 @@ def build(name, sc, base_cfg, out, n_clients):
                        "rolling_coverage", "calibration_samples", "calibration_age_minutes",
                        "margin_source", "calibration_warning", "forecast_age_minutes",
                        "forecast_warning"]]
+            node = node.assign(backup_power_limit_mw=ns['backup_power_limit_mw'].to_numpy(),
+                               backup_energy_limit_mwh=ns['backup_energy_limit_mwh'].to_numpy(),
+                               step_hours=ns['step_hours'].to_numpy())
             node = node.assign(reserve_fixed_mw=fx["reserve_mw"].to_numpy(),
                                shortfall_fixed_mw=fx["shortfall_mw"].to_numpy())
             kpi["reserve"] = {k: {x: v[1][x] for x in ("reserve_pct_of_forecast",

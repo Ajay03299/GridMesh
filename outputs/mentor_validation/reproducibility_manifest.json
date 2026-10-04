@@ -1,0 +1,34 @@
+{
+  "python": "3.12.14",
+  "numpy": "2.5.3",
+  "pandas": "3.0.6",
+  "scipy": "1.18.1",
+  "torch": "2.14.1+cpu",
+  "sha256": {
+    "outputs\\mentor_validation\\forecasting_metrics.csv": "df7abf816c1f2b32d50a3d1c3e48b863c510012e41c9b77f7226ab963a30e2dd",
+    "outputs\\mentor_validation\\sitewise_metrics.csv": "0883388f228ca9fb1d80575788ef4b5dbe7c26aaa9806af3f87a5c60e187a885",
+    "outputs\\mentor_validation\\model_to_operations_comparison.csv": "fa87f91f5a16c274cb100fff7e9fdb768f109ebe5533ba3557f129923b3c4d04",
+    "outputs\\mentor_validation\\reserve_schedule_comparison.csv": "f8b3483a46877f908cc3a4eca24b0a47ac5315b67273a1497804507f7892e653",
+    "outputs\\mentor_validation\\robustness_results.csv": "7149e4062e7683be88ef90d42b5ead23df65bc6fd405f1f50e8871077fb7fce7",
+    "outputs\\mentor_validation\\scaling_results.csv": "e9e28902d39d37e21e09e0311a25fad677434a64c08a5387a2fbaa2b18dcaffc",
+    "outputs\\mentor_validation\\summary_metrics.json": "794ea16eb4f9b4b54f3c511125550f033cdaa2515c8ca00eb9f6c7bbab33fd61",
+    "outputs\\mentor_validation\\optimization_summary.json": "356eaff6dc3e9ea8d45d57b5ac8a29470c2d2ce81abdad35c1deceb67d3bbdcb",
+    "run_mentor_validation.py": "239e30667398ae297d0e32aed688ee0bfd3cff930146222a43ff52bb8556d765",
+    "verify_legacy_evidence.py": "d5d42ed68fb8c624add6f721bb1fb1a1ee88f26fcb30b9d97e83ef4499cec89f",
+    "finalize_mentor_evidence.py": "34fe41cd0b5a91885b633888aa6eba1ecbe062d15715fd2be42663f8fb6af229",
+    "src\\data\\nasa_power.py": "467d55ef3311a342ee7f77127f7abebfb84e5abcbffd7f9bee940d78d33a1ccf",
+    "src\\data\\virtual_sites.py": "187ea2e1a4efe7559fca05d3afe2c7bd5c1a2dc57163e1033445faac87178705",
+    "src\\reserve\\simulator.py": "7e525c9c2c62211d40fa2429896c5c422fe240abd1bdb3fb6b5950ea231e00b7",
+    "src\\reliability\\calibration.py": "c538d7ed816e9afcbcf5e806f44eded495a626c5994d55bede94548b1a6a3843",
+    "test_mentor_validation.py": "f9b0456356597eff0e9d44e82c188b4a40d597e1055827d0f8704f74a9784046",
+    "config.yaml": "c08302063c9d8f3973aababe3d381b4ec03b0279402474393f3ef186decf4f1f"
+  },
+  "verification": "15 model fits, 1500 site metrics, 30 paired reserve runs, hourly constraints/accounting verified",
+  "commands": [
+    "python run_mentor_validation.py",
+    "python verify_legacy_evidence.py",
+    "python -m unittest test_mentor_validation -v",
+    "python audit.py",
+    "python finalize_mentor_evidence.py"
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "selected": {
+    "persistence": "fixed_10pct",
+    "smart_persistence": "fixed_10pct",
+    "local_only": "nominal_05",
+    "fedavg": "nominal_05",
+    "reliability_fedavg": "nominal_05",
+    "reliability_fedavg_event": "nominal_05"
+  },
+  "selection": "Every validation seed: availability >= fixed and ENS <= fixed; then minimum backup",
+  "candidates": [
+    {
+      "name": "fixed_20pct",
+      "family": "fixed",
+      "fraction": 0.2
+    },
+    {
+      "name": "fixed_10pct",
+      "family": "fixed",
+      "fraction": 0.1
+    },
+    {
+      "name": "fixed_15pct",
+      "family": "fixed",
+      "fraction": 0.15
+    },
+    {
+      "name": "nominal_05",
+      "family": "nsigma",
+      "delta": 0.05,
+      "window": 6
+    },
+    {
+      "name": "nominal_01",
+      "family": "nsigma",
+      "delta": 0.01,
+      "window": 12
+    },
+    {
+      "name": "empirical_05",
+      "family": "empirical",
+      "delta": 0.05,
+      "window": 12
+    },
+    {
+      "name": "empirical_01",
+      "family": "empirical",
+      "delta": 0.01,
+      "window": 36
+    },
+    {
+      "name": "nominal_floor10",
+      "family": "nsigma",
+      "delta": 0.05,
+      "window": 12,
+      "floor": 0.1
+    },
+    {
+      "name": "empirical_floor10",
+      "family": "empirical",
+      "delta": 0.01,
+      "window": 36,
+      "floor": 0.1
+    }
+  ],
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "test_used_for_selection": false
+}

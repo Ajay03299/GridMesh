@@ -1,0 +1,6 @@
+scenario,intervals,availability_pct,ens_mwh,backup_mwh,used_backup_mwh,planned_uncovered_mwh,margin_undercoverage_intervals,asset_limited_intervals,energy_exhausted_intervals,delivery_failure_intervals,cost_score
+normal,5,100.0,0.0,0.05,0.0,0.0,0,0,0,0,0.05
+cloud,5,40.0,0.049999999999999996,0.06,0.04999999999999999,0.065,0,3,2,0,1.0599999999999998
+insufficient,5,0.0,0.08999999999999997,0.01,0.01,0.11499999999999999,0,5,3,0,1.8099999999999994
+stale_missing,5,100.0,0.0,0.06,0.0,0.05000000000000001,0,0,0,0,0.06
+dropout,5,100.0,0.0,0.06,0.0,0.08,0,0,0,0,0.06

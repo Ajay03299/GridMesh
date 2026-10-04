@@ -1,0 +1,75 @@
+{
+  "provenance": {
+    "provider": "NASA POWER",
+    "latitude": 12.9716,
+    "longitude": 77.5946,
+    "year_utc": 2024,
+    "rows": 8784,
+    "step_hours": 1,
+    "sha256": "c6c267e012d9da7c00801437e78c9e07e551137bfbb51f326a81c314a756d07c",
+    "source_header": {
+      "title": "NASA/POWER Source Native Resolution Hourly Data",
+      "api": {
+        "version": "v2.10.2",
+        "name": "POWER Hourly API"
+      },
+      "sources": [
+        "SYN1DEG",
+        "MERRA2"
+      ],
+      "fill_value": -999.0,
+      "time_standard": "UTC",
+      "start": "20240101",
+      "end": "20241231"
+    },
+    "pv_status": "modeled from gridded GHI and temperature, not measured generation",
+    "clear_sky_status": "derived Haurwitz + approximate solar geometry",
+    "ghi_conversion": "hourly Wh/m2 divided by one hour to obtain average W/m2",
+    "weather_diversity": "one co-located weather record; sites are simulated",
+    "source_url": "https://power.larc.nasa.gov/api/temporal/hourly/point?parameters=ALLSKY_SFC_SW_DWN,T2M&community=RE&longitude=77.5946&latitude=12.9716&start=20240101&end=20241231&format=JSON&time-standard=UTC"
+  },
+  "splits": {
+    "mode": "chronological",
+    "train": "2024-01-01 .. 2024-09-13 (257 days)",
+    "val": "2024-09-13 .. 2024-11-07 (56 days)",
+    "test": "2024-11-07 .. 2025-01-01 (56 days)"
+  },
+  "policy_freeze_sha256": "99d80abf49b9006597ef2614c2a909d302982e806b4f4c68916b705bbd1910cd",
+  "frozen_reference_unchanged": true,
+  "reference_hashes": {
+    "bengaluru_hourly.csv": "055960cbd656390378383e63648990d831dde2314766a491f9885fc133f11393",
+    "config.yaml": "486770d73f80492a6f0701a9f774173cd9c509de23ac8c0919ad89cc5e37b83f",
+    "forecasting_metrics.csv": "df7abf816c1f2b32d50a3d1c3e48b863c510012e41c9b77f7226ab963a30e2dd",
+    "legacy_reserve_reproduction.csv": "2875b19cf4177eadd91aee6fb968de4a828becf2da6265bc53392b2dd2d21cc0",
+    "legacy_verification.json": "1143cb6867b173e80a35f5cb95f47c75bebbaacac3a427a27d6ff0c9c0145661",
+    "model_to_operations_comparison.csv": "fa87f91f5a16c274cb100fff7e9fdb768f109ebe5533ba3557f129923b3c4d04",
+    "optimization_summary.json": "356eaff6dc3e9ea8d45d57b5ac8a29470c2d2ce81abdad35c1deceb67d3bbdcb",
+    "provenance.json": "7a6ea6d48006828fb7e29e93bbd8f9e164153a18a97008257803a5d1fb52cb71",
+    "representative_schedule.csv": "a13d6f2f2e1d896af842e9110cdda429790db5155bdb2238b90e4055c58ebc22",
+    "representative_schedule.png": "da2c94f7a9e11ef8ab37eca7db054a2553bc51d7d2cabc3ccc70221d35e7f744",
+    "reproducibility_manifest.json": "f801dc244d1ec3a8e96db3fec734e4b5ec7b716c301ce5ee53dea8121c1088e7",
+    "reserve_schedule_comparison.csv": "f8b3483a46877f908cc3a4eca24b0a47ac5315b67273a1497804507f7892e653",
+    "robustness_results.csv": "7149e4062e7683be88ef90d42b5ead23df65bc6fd405f1f50e8871077fb7fce7",
+    "scaling_results.csv": "e9e28902d39d37e21e09e0311a25fad677434a64c08a5387a2fbaa2b18dcaffc",
+    "schedule_chart.json": "82ae91220a62cf8280abc88f0f3c6859b07db52928dbe53ab1d42ca2eb41ca8b",
+    "sitewise_metrics.csv": "0883388f228ca9fb1d80575788ef4b5dbe7c26aaa9806af3f87a5c60e187a885",
+    "summary_metrics.json": "794ea16eb4f9b4b54f3c511125550f033cdaa2515c8ca00eb9f6c7bbab33fd61",
+    "virtual_site_parameters.csv": "eacabf0faf878f888e848c9009bc6320fc20a291a1f6a2b6af132667a39b7820"
+  },
+  "planner": "Causal one-interval analytic LP, scheduled-energy debit; not retrospective full-day LP",
+  "assumptions": [
+    "Synthetic demand known at decision time (ideal load forecast)",
+    "Fixed grid availability known at decision time",
+    "One co-located weather record; modeled PV",
+    "Online residuals use only earlier observed targets",
+    "Validation labels select models and policy; test never selects settings",
+    "Daytime targets only; nightly backup adequacy not evaluated"
+  ],
+  "budgets": {
+    "local_only": "12 full local epochs per site, best validation checkpoint",
+    "federated": "12 rounds, <=20 selected sites/round, 1 local epoch/round; not equal total compute",
+    "persistence": "No training"
+  },
+  "formal_privacy": false,
+  "field_validated": false
+}

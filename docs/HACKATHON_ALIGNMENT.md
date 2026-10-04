@@ -50,10 +50,11 @@ Future integration requires measured-data validation, interfaces, security revie
 ## Affordability and community operations
 
 The proposed owner is a community operator/ESCO with a trained local operator and DISCOM escalation.
-The shared software-service hypothesis is INR4,650/month, or INR46.50 at 100 paying households.
-Hardware, metering/gateways, installation, reserve energy, grid bills and finance require separate
-funding. At 50 households, the same service budget is INR93. No Schneider price comparison or
-proven cash saving is asserted. A pilot must test total costs, benefits and willingness to pay.
+The unsupported INR4,650 software allocation is withdrawn. The itemised model in
+configs/affordability_costs.yaml estimates covered added service at INR6,996–40,874/month,
+with a15,268 base. At100/50 payers base covered recovery is about INR153/305 per home.
+Unquoted retrofit/access and energy changes remain excluded. No Schneider price
+comparison or cash saving claimed. Complete economics and WTP remain unresolved.
 
 ## Strong submission, with evidence boundaries
 

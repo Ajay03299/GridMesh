@@ -1,0 +1,21 @@
+seeds: [42, 43, 44, 45, 46]
+method: reliability_fedavg
+target_validation_availability_pct: 99.0
+# Engineering stress assumptions, not empirical Indian error distributions.
+# Chosen before final evaluation; all policies see identical draws and actuals.
+scenarios:
+  normal: {}
+  demand_error: {demand_bias: 0.05, demand_std: 0.10}
+  grid_uncertainty: {grid_loss_fraction: 0.5, event_every: 6}
+  backup_derated: {known_power_factor: 0.7}
+  backup_unavailable: {delivery_loss_fraction: 1.0, event_every: 8}
+  half_daily_energy: {known_energy_factor: 0.5}
+  stale_forecast: {stale_every: 6}
+  cloud_burst: {solar_loss_fraction: 0.35, event_every: 6}
+joint_margin:
+  window: 24
+  min_periods: 6
+  quantiles: [0.90, 0.95, 0.99]
+  # Safety response for stale/missing forecasts: zero-solar planning bound,
+  # not a predicted physical output. Operator review remains mandatory.
+  stale_safety_bound: true

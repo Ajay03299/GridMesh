@@ -138,11 +138,12 @@ remain in the generated evidence report. A 1,000-site run is not part of the pub
 
 ## Affordability and deployment
 
-The existing illustrative software service budget is INR4,650/month, or INR46.50 per household
-at 100 paying households. At 50 households it is INR93. These figures are hypotheses, not supplier
-quotes or proven willingness to pay. PV, gateways, installation, reserve hardware, energy, grid
-bills, tax and finance are outside that service budget. A community operator/ESCO would own daily
-monitoring and support, with escalation to the DISCOM and approved asset operators.
+The unsupported historical INR4,650 allocation is withdrawn. The current itemised
+covered service model estimates INR15,268/month base, about153/305 per home at100/50
+payers. Infrastructure uses published supplier rates; paid-work and recovery parameters
+are assumptions, not validated quotes. Unquoted retrofit/access and energy changes
+remain excluded. See docs/AFFORDABILITY.md; complete economic feasibility is unresolved.
+A paid community operator/ESCO would review advice and coordinate with asset owners.
 
 The default experimental sites are plant-sized (5–20 MW), independent of the household service
 cost allocation. A neighbourhood pilot must replace capacities with measured kW-scale resources,

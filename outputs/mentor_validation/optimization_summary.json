@@ -1,0 +1,12 @@
+{
+  "solver": "scipy linprog HiGHS",
+  "objective": "sum((1*q + 20*u)*dt)",
+  "step_hours": 1,
+  "peak_priority_weight": 0,
+  "grid_dispatch_mode": "fixed_availability",
+  "all_pairing_assertions_passed": true,
+  "all_power_daily_energy_requirement_constraints_passed": true,
+  "representative_date": "2024-01-28",
+  "representative_daily_scheduled_mwh": 0.473849,
+  "representative_daily_budget_mwh": 0.473849
+}
